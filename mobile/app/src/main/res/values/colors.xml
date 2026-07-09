@@ -1,0 +1,7 @@
+<resources>
+    <!-- Mirrors the web design tokens (indigo-violet primary, teal accent). -->
+    <color name="nexa_background">#FBFBFE</color>
+    <color name="nexa_background_dark">#0B0F1A</color>
+    <color name="nexa_primary">#5B3DF5</color>
+    <color name="ic_launcher_background">#5B3DF5</color>
+</resources>

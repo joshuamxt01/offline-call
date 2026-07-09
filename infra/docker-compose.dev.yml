@@ -1,0 +1,58 @@
+# Local development stack — Postgres + Redis, so the whole backend runs offline.
+# Usage:  docker compose -f infra/docker-compose.dev.yml up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nexa-postgres
+    environment:
+      POSTGRES_USER: nexa
+      POSTGRES_PASSWORD: nexa
+      POSTGRES_DB: nexa
+    ports:
+      - "5432:5432"
+    volumes:
+      - nexa_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexa"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: nexa-redis
+    command: ["redis-server", "--appendonly", "no", "--save", ""]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Optional: local S3-compatible storage to stand in for Backblaze B2 in dev.
+  minio:
+    image: minio/minio:latest
+    container_name: nexa-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: nexa
+      MINIO_ROOT_PASSWORD: nexa-secret
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - nexa_minio:/data
+
+  # Optional: local TURN/STUN for NAT traversal testing.
+  coturn:
+    image: coturn/coturn:latest
+    container_name: nexa-coturn
+    network_mode: host
+    volumes:
+      - ./coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
+    command: ["-c", "/etc/coturn/turnserver.conf"]
+
+volumes:
+  nexa_pgdata:
+  nexa_minio:

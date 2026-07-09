@@ -1,0 +1,23 @@
+{
+  "name": "nexa",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Nexa — private hybrid (cloud + local Wi-Fi) communication platform",
+  "workspaces": [
+    "shared",
+    "backend",
+    "web"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace backend",
+    "dev:web": "npm run dev --workspace web",
+    "build": "npm run build --workspace shared && npm run build --workspace backend",
+    "infra:up": "docker compose -f infra/docker-compose.dev.yml up -d",
+    "infra:down": "docker compose -f infra/docker-compose.dev.yml down",
+    "migrate": "npm run migrate --workspace backend",
+    "seed": "npm run seed --workspace backend"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <cache-path name="cache" path="." />
+    <external-cache-path name="external_cache" path="." />
+    <!-- Downloaded APK for in-app updates (getExternalFilesDir/Download). -->
+    <external-files-path name="downloads" path="Download/" />
+</paths>

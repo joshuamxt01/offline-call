@@ -1,0 +1,58 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# env / secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# builds
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# logs
+*.log
+npm-debug.log*
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# android
+mobile/.gradle/
+mobile/build/
+mobile/app/build/
+mobile/local.properties
+mobile/.idea/
+*.apk
+*.keystore
+# downloaded build toolchain (JDK, Android SDK, Gradle) — gigabytes, machine-local
+mobile/.localtools/
+
+# desktop (.NET / WPF)
+desktop/bin/
+desktop/obj/
+desktop/publish/
+# downloaded local .NET SDK — ~200MB, machine-local
+desktop/.dotnet/
+
+# large distributables — exceed GitHub's 100MB limit; build locally / host separately
+*.exe
+web/public/nexa-windows.exe
+web/public/nexa.apk
+
+# misc
+coverage/
+.turbo/
+
+# playwright mcp session artifacts
+.playwright-mcp/

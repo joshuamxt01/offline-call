@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Allow cleartext HTTP so the app can reach a backend on the local network
+     (e.g. http://192.168.x.x:4000) or the emulator host. HTTPS still works too.
+     This is a debug/LAN convenience; a production build would restrict this. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
