@@ -30,6 +30,7 @@
     "pino-http": "^10.2.0",
     "postgres": "^3.4.4",
     "socket.io": "^4.7.5",
+    "tsx": "^4.17.0",
     "ulid": "^2.3.0",
     "zod": "^3.23.8"
   },
@@ -40,7 +41,6 @@
     "@types/node": "^20.14.15",
     "drizzle-kit": "^0.24.2",
     "pino-pretty": "^11.2.2",
-    "tsx": "^4.17.0",
     "typescript": "^5.5.4",
     "vitest": "^2.0.5"
   }

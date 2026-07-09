@@ -1,0 +1,44 @@
+# Render blueprint for the Nexa backend (API + Socket.IO).
+# Deploy: Render dashboard -> New -> Blueprint -> pick this repo. Render reads
+# this file, creates the service, then you fill in the secret env vars (the ones
+# marked "sync: false") from your backend/.env. Neon (Postgres), Upstash (Redis)
+# and Backblaze (S3) are external managed services.
+services:
+  - type: web
+    name: nexa-backend
+    runtime: node
+    plan: starter          # Socket.IO/WebSockets need a paid instance (free spins down)
+    rootDir: .
+    buildCommand: npm install
+    startCommand: npm run start --workspace @nexa/backend
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # PORT is injected by Render automatically; the app reads process.env.PORT.
+      - key: CORS_ORIGINS
+        sync: false        # comma-separated web origins, e.g. https://your-web-url
+      - key: DATABASE_URL
+        sync: false        # Neon pooled connection string (sslmode=require)
+      - key: REDIS_URL
+        sync: false        # Upstash rediss:// URL
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: TURN_SECRET
+        sync: false        # optional (only if you run a coturn TURN server)
+      - key: TURN_URLS
+        sync: false        # optional, e.g. turn:turn.example:3478
+      - key: S3_ENDPOINT
+        sync: false        # https://s3.us-east-005.backblazeb2.com
+      - key: S3_REGION
+        sync: false        # us-east-005
+      - key: S3_BUCKET
+        sync: false        # offline-call
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_FORCE_PATH_STYLE
+        value: "true"
