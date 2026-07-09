@@ -57,3 +57,6 @@ coverage/
 
 # playwright mcp session artifacts
 .playwright-mcp/
+
+# kotlin compiler session junk
+mobile/.kotlin/
