@@ -17,7 +17,7 @@ public partial class MainWindow : Window
     private static readonly string ConfigDir =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Nexa");
     private static readonly string ServerFile = Path.Combine(ConfigDir, "server.txt");
-    private const string DefaultServer = "https://louis-these-nevertheless-barn.trycloudflare.com";
+    private const string DefaultServer = "https://offline-call.vercel.app";
 
     private string _server = "";
 

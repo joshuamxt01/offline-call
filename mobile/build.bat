@@ -19,11 +19,10 @@ set "GRADLE=%TOOLS%\gradle\gradle-8.9\bin\gradle.bat"
 set "PATH=%JAVA_HOME%\bin;%PATH%"
 
 REM --- Where your phone should reach the backend ---
-REM This is only the DEFAULT baked into the app; users can change it in-app under
-REM "Server settings" on the login screen (e.g. paste an https tunnel URL to use
-REM it over mobile data). For a real phone on the same Wi-Fi, use your PC's LAN IP.
-REM (Emulator-only value was http://10.0.2.2:4000.)
-set "API_BASE_URL=http://192.168.118.4:4000"
+REM Default baked into the app = the PERMANENT Render backend, so a fresh install
+REM works over any network with no setup. Users can still change it in-app under
+REM "Server settings" (e.g. a LAN IP like http://192.168.x.x:4000 for offline mode).
+set "API_BASE_URL=https://offline-call.onrender.com"
 
 if not exist "%JAVA_HOME%\bin\java.exe" (
   echo [ERROR] Toolchain missing. Run setup.bat first.
