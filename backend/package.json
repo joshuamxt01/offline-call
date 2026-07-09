@@ -7,7 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
-    "build": "tsc --noEmit",
+    "build": "echo \"backend runs via tsx — no build step needed\"",
     "migrate": "tsx src/db/migrate.ts",
     "seed": "tsx src/db/seed.ts",
     "db:generate": "drizzle-kit generate",
