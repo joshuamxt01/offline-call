@@ -90,6 +90,22 @@ fun SettingsScreen(
                 ) { Text("Change photo") }
             }
         }
+        Spacer(Modifier.height(12.dp))
+        val avatarPrivacy by vm.avatarPrivacy.collectAsStateWithLifecycle()
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Only contacts can see my photo", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    "When off, your profile picture is public.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(
+                checked = avatarPrivacy == "contacts_only",
+                onCheckedChange = { vm.setAvatarPrivacy(if (it) "contacts_only" else "public") },
+            )
+        }
         Spacer(Modifier.height(20.dp))
 
         // Security

@@ -57,6 +57,14 @@ class SettingsViewModel @Inject constructor(
     private val _privacy = MutableStateFlow("public")
     val privacy: StateFlow<String> = _privacy
 
+    private val _avatarPrivacy = MutableStateFlow("public") // public | contacts_only
+    val avatarPrivacy: StateFlow<String> = _avatarPrivacy
+
+    fun setAvatarPrivacy(value: String) = viewModelScope.launch {
+        _avatarPrivacy.value = value
+        runCatching { api.updateProfile(UpdateProfileRequest(avatarPrivacy = value)) }
+    }
+
     val ringtoneOptions: List<Pair<String, String>> = RingtonePlayer.BUILTIN
     private val _ringtone = MutableStateFlow(store.ringtoneId)
     val ringtone: StateFlow<String> = _ringtone
@@ -89,6 +97,7 @@ class SettingsViewModel @Inject constructor(
             runCatching { api.me().user }.getOrNull()?.let { u ->
                 u.privacy?.let { _privacy.value = it }
                 _avatarVersion.value = u.avatarObjectId
+                u.avatarPrivacy?.let { _avatarPrivacy.value = it }
             }
         }
     }

@@ -46,6 +46,7 @@ export interface UserPrivate extends UserPublic {
   role: UserRole;
   status: UserStatus;
   privacy: UserPrivacy;
+  avatarPrivacy?: "public" | "contacts_only";
   lastSeenAt: string | null;
   createdAt: string;
 }

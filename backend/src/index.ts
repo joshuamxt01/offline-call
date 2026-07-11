@@ -12,6 +12,7 @@ import { purgeExpiredTokens } from "./modules/auth/auth.service.js";
 async function ensureSchema() {
   try {
     await sql`ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to text`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_privacy text NOT NULL DEFAULT 'public'`;
     await sql`CREATE TABLE IF NOT EXISTS message_reactions (
       message_id text NOT NULL,
       user_id uuid NOT NULL,

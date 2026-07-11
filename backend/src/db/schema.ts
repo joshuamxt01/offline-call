@@ -29,6 +29,8 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash").notNull(),
   displayName: text("display_name"),
   avatarObjectId: uuid("avatar_object_id"),
+  // Who can see the profile picture: public (anyone) | contacts_only (accepted contacts + self)
+  avatarPrivacy: text("avatar_privacy").notNull().default("public"),
   bio: text("bio"),
   status: text("status").notNull().default("active"),
   role: text("role").notNull().default("user"),

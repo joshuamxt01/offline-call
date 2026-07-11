@@ -1,11 +1,19 @@
 "use client";
 import { useState, type HTMLAttributes, type ReactNode } from "react";
 import { cn, initials } from "@/lib/utils";
+import { useAuthStore } from "@/lib/store/auth";
 
-/** Public URL that redirects to a user's profile picture (or 404 → initials). */
+/** URL that redirects to a user's profile picture (or 404 → initials). Includes
+ *  the viewer's token so "contacts-only" avatars resolve for the owner/contacts
+ *  (plain <img> can't send an Authorization header). */
 export function avatarUrl(userId: string, version?: string | null): string {
   const base = process.env.NEXT_PUBLIC_API_URL ?? "";
-  return `${base}/api/v1/users/${userId}/avatar${version ? `?v=${version}` : ""}`;
+  const token = useAuthStore.getState().accessToken;
+  const params = new URLSearchParams();
+  if (version) params.set("v", version);
+  if (token) params.set("t", token);
+  const qs = params.toString();
+  return `${base}/api/v1/users/${userId}/avatar${qs ? `?${qs}` : ""}`;
 }
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {

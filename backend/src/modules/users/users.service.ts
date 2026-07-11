@@ -107,6 +107,7 @@ export async function updateProfile(
     displayName?: string;
     bio?: string;
     avatarObjectId?: string;
+    avatarPrivacy?: "public" | "contacts_only";
     privacy?: "public" | "private" | "contacts_only";
     statusKind?: string;
     statusMessage?: string | null;

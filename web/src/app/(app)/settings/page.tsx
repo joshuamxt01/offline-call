@@ -51,6 +51,10 @@ export default function SettingsPage() {
       setAvatarVersion(u.avatarObjectId ?? String(Date.now()));
     },
   });
+  const setAvatarPrivacy = useMutation({
+    mutationFn: (v: "public" | "contacts_only") => usersApi.updateProfile({ avatarPrivacy: v }),
+    onSuccess: (u) => setUser(u),
+  });
 
   const savePrivacy = useMutation({
     mutationFn: () => usersApi.updateProfile({ privacy, statusKind, statusMessage: statusMessage || null }),
@@ -99,6 +103,18 @@ export default function SettingsPage() {
               </button>
             </div>
           </div>
+          <label className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium">Only contacts can see my photo</p>
+              <p className="text-xs text-muted-foreground">When off, your profile picture is public.</p>
+            </div>
+            <input
+              type="checkbox"
+              className="h-5 w-5 accent-primary"
+              checked={user?.avatarPrivacy === "contacts_only"}
+              onChange={(e) => setAvatarPrivacy.mutate(e.target.checked ? "contacts_only" : "public")}
+            />
+          </label>
           <div className="space-y-4">
             <Field label="Display name" htmlFor="dn">
               <Input id="dn" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />

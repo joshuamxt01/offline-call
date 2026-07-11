@@ -1,5 +1,5 @@
 {
-  "versionCode": 13,
-  "versionName": "0.3.1",
-  "notes": "Reply to messages and react with emojis! Long-press a message to reply or add a reaction. Plus forgot-password on the website. Tap Update to install."
+  "versionCode": 14,
+  "versionName": "0.3.2",
+  "notes": "Profile pictures are public by default so everyone can see them (make sure both phones are updated). New Settings option: 'Only contacts can see my photo'. Tap Update to install."
 }

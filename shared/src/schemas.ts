@@ -38,6 +38,7 @@ export const updateProfileSchema = z.object({
   displayName: z.string().max(80).optional(),
   bio: z.string().max(300).optional(),
   avatarObjectId: z.string().uuid().optional(),
+  avatarPrivacy: z.enum(["public", "contacts_only"]).optional(),
   privacy: z.enum(["public", "private", "contacts_only"]).optional(),
   statusKind: z.enum(["available", "busy", "in_meeting", "at_work", "away", "dnd", "custom"]).optional(),
   statusMessage: z.string().max(120).nullish(),

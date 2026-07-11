@@ -35,6 +35,7 @@ export function toUserPrivate(u: UserRow): UserPrivate {
     role: u.role as UserRole,
     status: u.status as UserStatus,
     privacy: (u.privacy as UserPrivacy) ?? "public",
+    avatarPrivacy: (u.avatarPrivacy as "public" | "contacts_only") ?? "public",
     lastSeenAt: u.lastSeenAt ? u.lastSeenAt.toISOString() : null,
     createdAt: u.createdAt.toISOString(),
   };

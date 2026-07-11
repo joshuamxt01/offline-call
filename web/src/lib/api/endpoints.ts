@@ -51,6 +51,7 @@ export const usersApi = {
     statusKind?: string;
     statusMessage?: string | null;
     avatarObjectId?: string;
+    avatarPrivacy?: "public" | "contacts_only";
   }) => api<UserPrivate>("/users/me", { method: "PATCH", body }),
 };
 

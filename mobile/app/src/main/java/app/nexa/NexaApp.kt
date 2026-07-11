@@ -7,12 +7,23 @@ import android.os.Build
 import app.nexa.service.AppForeground
 import app.nexa.service.CallForegroundService
 import app.nexa.service.MessagingService
+import coil.ImageLoader
+import coil.ImageLoaderFactory
 import dagger.hilt.android.HiltAndroidApp
+import okhttp3.OkHttpClient
 import java.io.File
 import java.io.PrintWriter
+import javax.inject.Inject
 
 @HiltAndroidApp
-class NexaApp : Application() {
+class NexaApp : Application(), ImageLoaderFactory {
+    // The app's OkHttp (auth interceptor attaches the bearer token to our API,
+    // and skips B2 presigned URLs) — so Coil can load "contacts-only" avatars.
+    @Inject lateinit var okHttpClient: OkHttpClient
+
+    override fun newImageLoader(): ImageLoader =
+        ImageLoader.Builder(this).okHttpClient(okHttpClient).build()
+
     override fun onCreate() {
         super.onCreate()
         installCrashLogger()
