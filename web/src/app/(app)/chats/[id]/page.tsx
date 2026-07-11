@@ -1,9 +1,10 @@
 "use client";
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { ArrowLeft, Phone, Video, ShieldCheck } from "lucide-react";
-import { useChat } from "@/lib/hooks/useChat";
+import { useAuthStore } from "@/lib/store/auth";
+import { useChat, type ChatMessage } from "@/lib/hooks/useChat";
 import { useCall } from "@/lib/webrtc/CallProvider";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { Composer } from "@/components/chat/Composer";
@@ -17,6 +18,13 @@ export default function ChatThreadPage() {
   );
 }
 
+function previewText(m: ChatMessage): string {
+  if (m.type === "voice") return "🎤 Voice message";
+  if (m.type === "video") return "📹 Video";
+  if (m.type === "image") return "📷 Photo";
+  return m.text || "Message";
+}
+
 function ChatThread() {
   const params = useParams<{ id: string }>();
   const search = useSearchParams();
@@ -24,11 +32,14 @@ function ChatThread() {
   const peerName = search.get("name") ?? "Conversation";
   const { startCall } = useCall();
 
-  const { messages, loading, peerTyping, send, sendMedia, notifyTyping, peerId: resolvedPeer } = useChat(
+  const myId = useAuthStore((s) => s.user?.id);
+  const { messages, loading, peerTyping, send, sendMedia, sendReaction, notifyTyping, peerId: resolvedPeer } = useChat(
     params.id,
     peerId,
   );
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+  const byId = useMemo(() => new Map(messages.map((m) => [m.id, m])), [messages]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -79,7 +90,16 @@ function ChatThread() {
         {loading ? (
           <div className="flex justify-center py-10"><Spinner /></div>
         ) : (
-          messages.map((m) => <MessageBubble key={m.id} message={m} />)
+          messages.map((m) => (
+            <MessageBubble
+              key={m.id}
+              message={m}
+              myId={myId}
+              replyTo={m.replyToId ? byId.get(m.replyToId) : undefined}
+              onReact={(emoji) => sendReaction(m.id, emoji)}
+              onReply={() => setReplyTo(m)}
+            />
+          ))
         )}
         {peerTyping && (
           <div className="flex gap-1 px-2 py-1 text-muted-foreground">
@@ -92,11 +112,13 @@ function ChatThread() {
       </div>
 
       <Composer
-        onSend={send}
+        onSend={(text) => { send(text, replyTo?.id ?? null); setReplyTo(null); }}
         onSendVoice={(blob, ms) => sendMedia("voice", blob, ms)}
         onSendVideo={(blob, ms) => sendMedia("video", blob, ms)}
         onSendImage={(blob) => sendMedia("image", blob, 0)}
         onTyping={notifyTyping}
+        replyTo={replyTo ? { name: replyTo.mine ? "You" : peerName, text: previewText(replyTo) } : null}
+        onCancelReply={() => setReplyTo(null)}
       />
     </div>
   );

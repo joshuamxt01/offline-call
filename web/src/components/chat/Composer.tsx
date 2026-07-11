@@ -14,12 +14,16 @@ export function Composer({
   onSendVideo,
   onSendImage,
   onTyping,
+  replyTo,
+  onCancelReply,
 }: {
   onSend: (text: string) => void;
   onSendVoice: (blob: Blob, durationMs: number) => void;
   onSendVideo: (blob: Blob, durationMs: number) => void;
   onSendImage: (blob: Blob) => void;
   onTyping: () => void;
+  replyTo?: { name: string; text: string } | null;
+  onCancelReply?: () => void;
 }) {
   const [text, setText] = useState("");
   const [videoOpen, setVideoOpen] = useState(false);
@@ -64,6 +68,17 @@ export function Composer({
   return (
     <>
       <div className="border-t border-border bg-card">
+        {replyTo && (
+          <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+            <div className="min-w-0 flex-1 border-l-2 border-primary pl-2">
+              <p className="text-xs font-medium text-primary">Replying to {replyTo.name}</p>
+              <p className="truncate text-xs text-muted-foreground">{replyTo.text}</p>
+            </div>
+            <button onClick={onCancelReply} aria-label="Cancel reply" className="rounded p-1 hover:bg-muted">
+              <X size={16} />
+            </button>
+          </div>
+        )}
         {showEmoji && (
           <div className="grid max-h-48 grid-cols-8 gap-1 overflow-y-auto border-b border-border p-2 text-2xl">
             {EMOJIS.map((e) => (

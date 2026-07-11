@@ -27,6 +27,10 @@ export interface ChatMessage {
   uploading?: boolean;
   /** True if the upload/send failed. */
   failed?: boolean;
+  /** Emoji reactions on this message. */
+  reactions?: { userId: string; emoji: string }[];
+  /** Id of the message this one replies to. */
+  replyToId?: string | null;
 }
 
 export function useChat(conversationId: string, initialPeerId?: string) {
@@ -75,7 +79,10 @@ export function useChat(conversationId: string, initialPeerId?: string) {
           text = "🔒 Media";
         }
       }
-      return { id: m.id, senderId: m.senderId, mine, type, text, media, time: m.serverCreatedAt, status: m.status };
+      return {
+        id: m.id, senderId: m.senderId, mine, type, text, media, time: m.serverCreatedAt, status: m.status,
+        reactions: m.reactions ?? [], replyToId: m.replyToId ?? null,
+      };
     },
     [myId, resolvePeerPub],
   );
@@ -142,13 +149,25 @@ export function useChat(conversationId: string, initialPeerId?: string) {
       if (t.conversationId === conversationId) setPeerTyping(t.active);
     };
 
+    const onReaction = (r: { messageId: string; userId: string; emoji: string; action: "add" | "remove" }) => {
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.id !== r.messageId) return msg;
+          const others = (msg.reactions ?? []).filter((x) => !(x.userId === r.userId && x.emoji === r.emoji));
+          return { ...msg, reactions: r.action === "add" ? [...others, { userId: r.userId, emoji: r.emoji }] : others };
+        }),
+      );
+    };
+
     socket.on(ServerEvents.MessageNew, onNew);
     socket.on(ServerEvents.MessageReceipt, onReceipt);
     socket.on(ServerEvents.Typing, onTyping);
+    socket.on(ServerEvents.ReactionUpdate, onReaction);
     return () => {
       socket.off(ServerEvents.MessageNew, onNew);
       socket.off(ServerEvents.MessageReceipt, onReceipt);
       socket.off(ServerEvents.Typing, onTyping);
+      socket.off(ServerEvents.ReactionUpdate, onReaction);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket, conversationId, decode, myId]);
@@ -160,6 +179,7 @@ export function useChat(conversationId: string, initialPeerId?: string) {
       type: MessageKind,
       optimistic: Pick<ChatMessage, "text" | "media">,
       mediaObjectId?: string,
+      replyToId?: string | null,
     ) => {
       const peerId = peerIdRef.current;
       if (!peerId) return;
@@ -170,10 +190,10 @@ export function useChat(conversationId: string, initialPeerId?: string) {
       seen.current.add(id);
       setMessages((prev) => [
         ...prev,
-        { id, senderId: myId ?? "", mine: true, type, time: clientCreatedAt, status: "sending", ...optimistic },
+        { id, senderId: myId ?? "", mine: true, type, time: clientCreatedAt, status: "sending", replyToId: replyToId ?? null, ...optimistic },
       ]);
 
-      const payload = { id, conversationId, type, ciphertext, nonce, mediaObjectId: mediaObjectId ?? null, clientCreatedAt };
+      const payload = { id, conversationId, type, ciphertext, nonce, mediaObjectId: mediaObjectId ?? null, replyToId: replyToId ?? null, clientCreatedAt };
 
       if (socket?.connected) {
         socket.emit(ClientEvents.MessageSend, payload, (ack: { ok: boolean }) => {
@@ -188,12 +208,32 @@ export function useChat(conversationId: string, initialPeerId?: string) {
   );
 
   const send = useCallback(
-    async (text: string) => {
+    async (text: string, replyToId?: string | null) => {
       const trimmed = text.trim();
       if (!trimmed) return;
-      await dispatch(trimmed, "text", { text: trimmed, media: null });
+      await dispatch(trimmed, "text", { text: trimmed, media: null }, undefined, replyToId);
     },
     [dispatch],
+  );
+
+  const sendReaction = useCallback(
+    (messageId: string, emoji: string) => {
+      if (!socket?.connected || !myId) return;
+      // Toggle: if I already reacted with this emoji, remove it.
+      const existing = messages.find((m) => m.id === messageId)?.reactions ?? [];
+      const mine = existing.some((r) => r.userId === myId && r.emoji === emoji);
+      const action = mine ? "remove" : "add";
+      socket.emit(ClientEvents.ReactionSet, { messageId, emoji, action });
+      // Optimistic local update.
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id !== messageId) return m;
+          const others = (m.reactions ?? []).filter((r) => !(r.userId === myId && r.emoji === emoji));
+          return { ...m, reactions: action === "add" ? [...others, { userId: myId, emoji }] : others };
+        }),
+      );
+    },
+    [socket, myId, messages],
   );
 
   /** Record → show an "uploading" bubble immediately → upload to B2 → send. */
@@ -248,5 +288,5 @@ export function useChat(conversationId: string, initialPeerId?: string) {
     typingTimeout.current = setTimeout(() => socket.emit(ClientEvents.TypingStop, { conversationId }), 2000);
   }, [socket, conversationId]);
 
-  return { messages, loading, peerTyping, send, sendMedia, notifyTyping, peerId: peerIdRef.current };
+  return { messages, loading, peerTyping, send, sendMedia, sendReaction, notifyTyping, peerId: peerIdRef.current };
 }
