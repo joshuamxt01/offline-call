@@ -4,8 +4,8 @@ import { z } from "zod";
 
 export const platformSchema = z.enum(["android", "web"]);
 export const callTypeSchema = z.enum(["voice", "video"]);
-export const messageTypeSchema = z.enum(["text", "voice", "video", "system"]);
-export const mediaKindSchema = z.enum(["avatar", "voice_note", "video_note"]);
+export const messageTypeSchema = z.enum(["text", "voice", "video", "image", "file", "system"]);
+export const mediaKindSchema = z.enum(["avatar", "voice_note", "video_note", "image", "file"]);
 
 const b64 = z.string().min(1).max(4096);
 

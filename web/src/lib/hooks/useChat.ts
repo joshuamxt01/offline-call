@@ -12,7 +12,7 @@ import { uploadEncryptedMedia, cacheLocalMedia, type MediaEnvelope } from "@/lib
 import { useSocket } from "@/lib/realtime/socket";
 import { useAuthStore } from "@/lib/store/auth";
 
-export type MessageKind = "text" | "voice" | "video";
+export type MessageKind = "text" | "voice" | "video" | "image" | "file";
 
 export interface ChatMessage {
   id: string;
@@ -193,7 +193,7 @@ export function useChat(conversationId: string, initialPeerId?: string) {
 
   /** Record → show an "uploading" bubble immediately → upload to B2 → send. */
   const sendMedia = useCallback(
-    async (kind: "voice" | "video", blob: Blob, durationMs: number) => {
+    async (kind: "voice" | "video" | "image" | "file", blob: Blob, durationMs: number) => {
       const peerId = peerIdRef.current;
       if (!peerId) return;
       const id = ulid();

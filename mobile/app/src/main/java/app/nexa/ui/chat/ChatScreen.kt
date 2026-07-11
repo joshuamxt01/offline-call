@@ -5,6 +5,9 @@ import android.media.MediaMetadataRetriever
 import android.media.MediaPlayer
 import android.widget.MediaController
 import android.widget.VideoView
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,6 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -32,6 +37,7 @@ import app.nexa.data.protocol.MediaEnvelope
 import app.nexa.domain.model.CallType
 import app.nexa.domain.model.ChatMessage
 import app.nexa.ui.common.Avatar
+import coil.compose.AsyncImage
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -74,6 +80,16 @@ fun ChatScreen(
             },
         )
         return
+    }
+
+    // Photo sharing — the modern photo picker needs no runtime permission.
+    val context = LocalContext.current
+    val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) {
+            val bytes = runCatching { context.contentResolver.openInputStream(uri)?.use { it.readBytes() } }.getOrNull()
+            val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
+            if (bytes != null && bytes.isNotEmpty()) vm.sendImage(bytes, mime, null)
+        }
     }
 
     // Voice notes need the mic permission — request on demand, then start recording.
@@ -135,6 +151,9 @@ fun ChatScreen(
                             Icon(Icons.AutoMirrored.Filled.Send, "Send")
                         }
                     } else {
+                        IconButton(onClick = {
+                            pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        }) { Icon(Icons.Default.Image, "Send photo") }
                         IconButton(onClick = { showRecorder = true }) { Icon(Icons.Default.Videocam, "Record video message") }
                         FilledIconButton(onClick = { requestVoice() }) { Icon(Icons.Default.Mic, "Record voice message") }
                     }
@@ -165,6 +184,7 @@ private fun MessageBubble(message: ChatMessage, resolve: suspend (MediaEnvelope)
             when {
                 message.type == "voice" && message.media != null -> VoiceNote(message.media, mine, resolve)
                 message.type == "video" && message.media != null -> VideoNote(message.media, resolve)
+                message.type == "image" && message.media != null -> ImageMessage(message.media, resolve)
                 else -> Text(message.text, color = if (mine) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface)
             }
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.align(Alignment.End)) {
@@ -211,6 +231,26 @@ private fun VoiceNote(env: MediaEnvelope, mine: Boolean, resolve: suspend (Media
             Icon(if (playing) Icons.Default.Pause else Icons.Default.PlayArrow, "Play", tint = fg)
         }
         Text("🎤 ${TimeUtil.formatDuration((env.durationMs / 1000).toInt())}", color = fg)
+    }
+}
+
+@Composable
+private fun ImageMessage(env: MediaEnvelope, resolve: suspend (MediaEnvelope) -> File?) {
+    var file by remember(env.mediaObjectId) { mutableStateOf<File?>(null) }
+    LaunchedEffect(env.mediaObjectId) { file = resolve(env) }
+    val f = file
+    if (f != null) {
+        AsyncImage(
+            model = f,
+            contentDescription = "Photo",
+            modifier = Modifier.size(width = 220.dp, height = 260.dp).clip(RoundedCornerShape(12.dp)),
+            contentScale = ContentScale.Crop,
+        )
+    } else {
+        Box(
+            Modifier.size(width = 220.dp, height = 260.dp).clip(RoundedCornerShape(12.dp)).background(Color.Black.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center,
+        ) { CircularProgressIndicator() }
     }
 }
 

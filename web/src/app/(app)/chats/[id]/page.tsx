@@ -95,6 +95,7 @@ function ChatThread() {
         onSend={send}
         onSendVoice={(blob, ms) => sendMedia("voice", blob, ms)}
         onSendVideo={(blob, ms) => sendMedia("video", blob, ms)}
+        onSendImage={(blob) => sendMedia("image", blob, 0)}
         onTyping={notifyTyping}
       />
     </div>

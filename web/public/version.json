@@ -1,5 +1,5 @@
 {
-  "versionCode": 6,
-  "versionName": "0.2.4",
-  "notes": "Voice notes and video notes now work: the app asks for mic/camera permission the moment you record. New built-in video recorder with a front/back camera flip and a 60-second timer. Tap Update to install."
+  "versionCode": 7,
+  "versionName": "0.2.5",
+  "notes": "You can now send photos in chat — tap the image icon in a conversation to pick and send a picture (end-to-end encrypted like everything else). Tap Update to install."
 }

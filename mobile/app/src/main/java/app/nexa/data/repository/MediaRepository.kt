@@ -28,7 +28,11 @@ class MediaRepository @Inject constructor(
         val enc = crypto.encrypt(bytes)
         val res = api.mediaUploadUrl(
             MediaUploadUrlRequest(
-                kind = if (kind == "voice") "voice_note" else "video_note",
+                kind = when (kind) {
+                    "voice" -> "voice_note"
+                    "video" -> "video_note"
+                    else -> kind // "image", "file"
+                },
                 contentType = "application/octet-stream",
                 sizeBytes = enc.cipher.size.toLong(),
                 durationMs = durationMs,
@@ -44,7 +48,7 @@ class MediaRepository @Inject constructor(
 
     /** Returns a decrypted, playable local file (cached). */
     suspend fun download(env: MediaEnvelope): File {
-        val ext = if (env.kind == "voice") "m4a" else "mp4"
+        val ext = extFor(env.kind)
         val cacheFile = File(context.cacheDir, "media_${env.mediaObjectId}.$ext")
         if (cacheFile.exists() && cacheFile.length() > 0) return cacheFile
 
@@ -55,10 +59,16 @@ class MediaRepository @Inject constructor(
         return cacheFile
     }
 
-    /** Seed the cache with a just-recorded file so the sender plays instantly. */
+    /** Seed the cache with a just-recorded/picked file so the sender sees it instantly. */
     fun cacheLocal(env: MediaEnvelope, source: File) {
-        val ext = if (env.kind == "voice") "m4a" else "mp4"
-        val dest = File(context.cacheDir, "media_${env.mediaObjectId}.$ext")
+        val dest = File(context.cacheDir, "media_${env.mediaObjectId}.${extFor(env.kind)}")
         if (!dest.exists()) source.copyTo(dest, overwrite = true)
+    }
+
+    private fun extFor(kind: String): String = when (kind) {
+        "voice" -> "m4a"
+        "video" -> "mp4"
+        "image" -> "jpg"
+        else -> "bin"
     }
 }

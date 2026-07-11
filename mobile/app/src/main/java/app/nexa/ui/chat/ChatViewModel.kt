@@ -102,6 +102,14 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    // ---- Photos ----
+    fun sendImage(bytes: ByteArray, mimeType: String, file: File?) {
+        if (peerId.isEmpty()) return
+        viewModelScope.launch {
+            chat.sendMedia(conversationId, peerId, "image", bytes, mimeType, 0, file)
+        }
+    }
+
     /** Download + decrypt a media message to a playable file (for players). */
     suspend fun mediaFile(env: MediaEnvelope): File? = runCatching { chat.resolveMedia(env) }.getOrNull()
 }

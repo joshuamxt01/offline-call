@@ -163,7 +163,7 @@ class ChatRepository @Inject constructor(
                 status = if (socket.connected.value) "sent" else "queued",
             ),
         )
-        touchConversation(conversationId, peerId, if (kind == "voice") "🎤 Voice message" else "📹 Video message", now, incUnread = false)
+        touchConversation(conversationId, peerId, mediaPreview(kind), now, incUnread = false)
 
         if (socket.connected.value) {
             socket.sendMediaMessage(conversationId, id, kind, sealed.ciphertext, sealed.nonce, env.mediaObjectId, iso)
@@ -173,6 +173,14 @@ class ChatRepository @Inject constructor(
                 messageDao.updateStatus(id, "sent")
             }
         }
+    }
+
+    private fun mediaPreview(kind: String): String = when (kind) {
+        "voice" -> "🎤 Voice message"
+        "video" -> "📹 Video message"
+        "image" -> "📷 Photo"
+        "file" -> "📎 Attachment"
+        else -> "🔒 message"
     }
 
     fun typing(conversationId: String, active: Boolean) = socket.typing(conversationId, active)
@@ -191,11 +199,7 @@ class ChatRepository @Inject constructor(
         val conv = conversationDao.byId(dto.conversationId)
         val peerId = if (mine) conv?.peerId ?: return else dto.senderId
         store(dto, peerId)
-        val preview = when (dto.type) {
-            "voice" -> "🎤 Voice message"
-            "video" -> "📹 Video message"
-            else -> "🔒 message"
-        }
+        val preview = if (dto.type == "text") "🔒 message" else mediaPreview(dto.type)
         touchConversation(dto.conversationId, peerId, preview, TimeUtil.parseIso(dto.serverCreatedAt), incUnread = !mine)
         if (!mine) {
             socket.markDelivered(dto.id)

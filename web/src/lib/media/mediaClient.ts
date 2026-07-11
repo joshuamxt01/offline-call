@@ -9,21 +9,21 @@ export interface MediaEnvelope {
   nonce: string; // base64
   mimeType: string;
   durationMs: number;
-  kind: "voice" | "video";
+  kind: "voice" | "video" | "image" | "file";
 }
 
 /** Encrypt a recorded blob, upload the ciphertext to B2, commit, and return the
  *  envelope the recipient needs to fetch + decrypt + play it. */
 export async function uploadEncryptedMedia(
   blob: Blob,
-  kind: "voice" | "video",
+  kind: "voice" | "video" | "image" | "file",
   durationMs: number,
 ): Promise<MediaEnvelope> {
   const bytes = new Uint8Array(await blob.arrayBuffer());
   const enc = await encryptBytes(bytes);
 
   const { objectId, uploadUrl, headers } = await mediaApi.uploadUrl({
-    kind: kind === "voice" ? "voice_note" : "video_note",
+    kind: kind === "voice" ? "voice_note" : kind === "video" ? "video_note" : kind,
     contentType: "application/octet-stream", // encrypted bytes are opaque
     sizeBytes: enc.cipher.length,
     durationMs,

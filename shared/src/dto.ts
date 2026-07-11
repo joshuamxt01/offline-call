@@ -3,11 +3,11 @@
 export type Platform = "android" | "web";
 export type CallType = "voice" | "video";
 export type CallTransport = "p2p" | "lan" | "turn";
-export type MessageType = "text" | "voice" | "video" | "system";
+export type MessageType = "text" | "voice" | "video" | "image" | "file" | "system";
 export type ContactState = "pending" | "accepted" | "blocked";
 export type UserRole = "user" | "admin";
 export type UserStatus = "active" | "suspended" | "deleted";
-export type MediaKind = "avatar" | "voice_note" | "video_note";
+export type MediaKind = "avatar" | "voice_note" | "video_note" | "image" | "file";
 
 /** Who can find/contact a user. Expandable (contacts_only added; more later). */
 export type UserPrivacy = "public" | "private" | "contacts_only";

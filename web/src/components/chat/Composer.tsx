@@ -1,6 +1,6 @@
 "use client";
-import { useState, type KeyboardEvent } from "react";
-import { Send, Mic, Video, X, Check } from "lucide-react";
+import { useRef, useState, type KeyboardEvent } from "react";
+import { Send, Mic, Video, X, Check, Image as ImageIcon } from "lucide-react";
 import { Textarea } from "@/components/ui/Input";
 import { useMediaRecorder } from "@/lib/hooks/useMediaRecorder";
 import { VideoRecorderModal } from "./VideoRecorderModal";
@@ -10,15 +10,18 @@ export function Composer({
   onSend,
   onSendVoice,
   onSendVideo,
+  onSendImage,
   onTyping,
 }: {
   onSend: (text: string) => void;
   onSendVoice: (blob: Blob, durationMs: number) => void;
   onSendVideo: (blob: Blob, durationMs: number) => void;
+  onSendImage: (blob: Blob) => void;
   onTyping: () => void;
 }) {
   const [text, setText] = useState("");
   const [videoOpen, setVideoOpen] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
   const voice = useMediaRecorder();
 
   function submit() {
@@ -79,6 +82,24 @@ export function Composer({
           </button>
         ) : (
           <>
+            <input
+              ref={fileInput}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) onSendImage(file);
+                e.target.value = "";
+              }}
+            />
+            <button
+              onClick={() => fileInput.current?.click()}
+              aria-label="Send photo"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-muted"
+            >
+              <ImageIcon size={20} />
+            </button>
             <button
               onClick={() => setVideoOpen(true)}
               aria-label="Record video message"

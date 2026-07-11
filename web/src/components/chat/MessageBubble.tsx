@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Check, CheckCheck, Clock } from "lucide-react";
 import { cn, formatTime } from "@/lib/utils";
 import type { ChatMessage } from "@/lib/hooks/useChat";
-import { VoiceMessage, VideoMessage } from "./MediaMessage";
+import { VoiceMessage, VideoMessage, ImageMessage } from "./MediaMessage";
 
 export function MessageBubble({ message }: { message: ChatMessage }) {
   const { mine, text, time, status, type, media, uploading, failed } = message;
@@ -20,11 +20,12 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
           mine
             ? "rounded-br-md bg-primary text-primary-foreground"
             : "rounded-bl-md bg-card text-card-foreground border border-border",
-          type === "video" && media && "p-1",
+          (type === "video" || type === "image") && media && "p-1",
         )}
       >
         {isMedia && type === "voice" && <VoiceMessage media={media} mine={mine} uploading={uploading} failed={failed} />}
         {isMedia && type === "video" && <VideoMessage media={media} mine={mine} uploading={uploading} failed={failed} />}
+        {isMedia && type === "image" && <ImageMessage media={media} mine={mine} uploading={uploading} failed={failed} />}
         {!isMedia && <p className="whitespace-pre-wrap break-words">{text}</p>}
         <div
           className={cn(

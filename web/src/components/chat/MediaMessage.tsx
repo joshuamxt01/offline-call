@@ -1,8 +1,37 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Play, Pause, Video as VideoIcon, Loader2 } from "lucide-react";
 import { resolveMediaUrl, type MediaEnvelope } from "@/lib/media/mediaClient";
 import { cn, formatDuration } from "@/lib/utils";
+
+export function ImageMessage({ media, uploading, failed }: { media: MediaEnvelope; mine: boolean; uploading?: boolean; failed?: boolean }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    resolveMediaUrl(media).then((u) => { if (alive) setUrl(u); }).catch(() => {});
+    return () => { alive = false; };
+  }, [media]);
+
+  if (failed) return <span className="px-2 text-sm text-red-300">⚠️ Failed to send</span>;
+
+  return (
+    <div className="relative">
+      {url ? (
+        <a href={url} target="_blank" rel="noreferrer">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={url} alt="Photo" className="max-h-72 w-auto max-w-[260px] rounded-xl object-cover" />
+        </a>
+      ) : (
+        <div className="grid h-48 w-[220px] place-items-center rounded-xl bg-black/20">
+          <Loader2 size={24} className="animate-spin text-muted-foreground" />
+        </div>
+      )}
+      {uploading && (
+        <span className="absolute bottom-1 right-1 rounded bg-black/50 px-1.5 py-0.5 text-[11px] text-white">Uploading…</span>
+      )}
+    </div>
+  );
+}
 
 export function VoiceMessage({ media, mine, uploading, failed }: { media: MediaEnvelope; mine: boolean; uploading?: boolean; failed?: boolean }) {
   const audioRef = useRef<HTMLAudioElement>(null);

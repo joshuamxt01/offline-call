@@ -99,7 +99,7 @@ export const callsApi = {
 
 // ---- Media (Backblaze B2 via presigned URLs) ----
 export const mediaApi = {
-  uploadUrl: (body: { kind: "voice_note" | "video_note"; contentType: string; sizeBytes: number; durationMs?: number }) =>
+  uploadUrl: (body: { kind: "voice_note" | "video_note" | "image" | "file" | "avatar"; contentType: string; sizeBytes: number; durationMs?: number }) =>
     api<{ objectId: string; uploadUrl: string; method: string; headers: Record<string, string> }>("/media/upload-url", {
       method: "POST",
       body,
