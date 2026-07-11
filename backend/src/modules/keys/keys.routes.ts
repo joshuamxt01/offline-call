@@ -29,14 +29,12 @@ keysRouter.get(
 
     if (!row) throw Errors.notFound("No keys published for user");
 
+    // Read-only: the client encrypts with the identity key (crypto_box), so we do
+    // NOT consume a one-time prekey here. That keeps this endpoint cheap to call
+    // on every send/decrypt (clients re-fetch to always use the peer's CURRENT
+    // key — essential so a reinstall/relogin key change doesn't break decryption).
     const prekeys = (row.key.oneTimePrekeys as string[]) ?? [];
     const oneTime = prekeys.length ? prekeys[0]! : null;
-    if (oneTime) {
-      await db
-        .update(deviceKeys)
-        .set({ oneTimePrekeys: prekeys.slice(1) })
-        .where(eq(deviceKeys.id, row.key.id));
-    }
 
     const bundle: PublicKeyBundle = {
       userId: req.params.userId!,

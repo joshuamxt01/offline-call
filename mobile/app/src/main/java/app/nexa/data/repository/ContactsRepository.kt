@@ -82,8 +82,21 @@ class ContactsRepository @Inject constructor(
     suspend fun unblockUser(userId: String): ApiResult<Unit> = mutate { api.unblockUser(BlockUserRequest(userId)) }
     suspend fun remove(contactId: String): ApiResult<Unit> = mutate { api.removeContact(contactId) }
 
-    suspend fun publicKeyOf(userId: String): String? =
-        contactDao.publicKeyOf(userId) ?: runCatching { api.keyBundle(userId).identityPub }.getOrNull()
+    /**
+     * The peer's current identity public key. With [forceRefresh] (or when nothing
+     * is cached) it fetches the CURRENT key from the server and updates the cache —
+     * essential so a peer's reinstall/relogin (which regenerates their key) doesn't
+     * permanently break decryption with a stale cached key.
+     */
+    suspend fun publicKeyOf(userId: String, forceRefresh: Boolean = false): String? {
+        if (!forceRefresh) {
+            val cached = contactDao.publicKeyOf(userId)
+            if (cached != null) return cached
+        }
+        val fresh = runCatching { api.keyBundle(userId).identityPub }.getOrNull()
+        if (fresh != null) runCatching { contactDao.updatePublicKey(userId, fresh) }
+        return fresh ?: contactDao.publicKeyOf(userId)
+    }
 
     fun updatePresence(userId: String, online: Boolean) {
         // Presence is refreshed via refresh(); realtime updates trigger a re-fetch in the VM.

@@ -41,8 +41,8 @@ export function useChat(conversationId: string, initialPeerId?: string) {
   const seen = useRef<Set<string>>(new Set());
   const typingTimeout = useRef<ReturnType<typeof setTimeout>>();
 
-  const resolvePeerPub = useCallback(async (peerId: string) => {
-    if (peerPubRef.current) return peerPubRef.current;
+  const resolvePeerPub = useCallback(async (peerId: string, force = false) => {
+    if (peerPubRef.current && !force) return peerPubRef.current;
     const pub = await keysApi.publicKeyOf(peerId);
     peerPubRef.current = pub;
     return pub;
@@ -58,6 +58,11 @@ export function useChat(conversationId: string, initialPeerId?: string) {
       if (peerId) {
         const pub = await resolvePeerPub(peerId);
         body = await decryptFrom(pub, m.ciphertext, m.nonce);
+        if (body === "🔒 Unable to decrypt") {
+          // Cached key may be stale (peer reinstalled) — refetch current key + retry.
+          const fresh = await resolvePeerPub(peerId, true);
+          if (fresh !== pub) body = await decryptFrom(fresh, m.ciphertext, m.nonce);
+        }
       }
       // Media messages carry a JSON envelope (media key + object id) as the body.
       let media: MediaEnvelope | null = null;
@@ -158,7 +163,7 @@ export function useChat(conversationId: string, initialPeerId?: string) {
     ) => {
       const peerId = peerIdRef.current;
       if (!peerId) return;
-      const pub = await resolvePeerPub(peerId);
+      const pub = await resolvePeerPub(peerId, true); // encrypt to the peer's CURRENT key
       const { ciphertext, nonce } = await encryptFor(pub, body);
       const id = ulid();
       const clientCreatedAt = new Date().toISOString();
@@ -213,7 +218,7 @@ export function useChat(conversationId: string, initialPeerId?: string) {
       try {
         const env = await uploadEncryptedMedia(blob, kind, durationMs);
         cacheLocalMedia(env.mediaObjectId, blob); // keep playing the local copy after upload
-        const pub = await resolvePeerPub(peerId);
+        const pub = await resolvePeerPub(peerId, true); // encrypt to the peer's CURRENT key
         const { ciphertext, nonce } = await encryptFor(pub, JSON.stringify(env));
         // Swap the placeholder for the real (uploaded) media.
         setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, media: env, uploading: false } : m)));

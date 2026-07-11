@@ -54,6 +54,9 @@ interface ContactDao {
     @Query("SELECT publicKey FROM contacts WHERE userId = :userId LIMIT 1")
     suspend fun publicKeyOf(userId: String): String?
 
+    @Query("UPDATE contacts SET publicKey = :key WHERE userId = :userId")
+    suspend fun updatePublicKey(userId: String, key: String)
+
     @Query("DELETE FROM contacts")
     suspend fun clear()
 }

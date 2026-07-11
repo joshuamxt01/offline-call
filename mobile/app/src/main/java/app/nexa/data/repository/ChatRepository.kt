@@ -109,7 +109,9 @@ class ChatRepository @Inject constructor(
         val trimmed = text.trim()
         if (trimmed.isEmpty()) return
         val myPriv = store.identity().privateKey
-        val peerPub = contacts.publicKeyOf(peerId) ?: return
+        // Encrypt to the peer's CURRENT key (refresh) so a reinstall on their side
+        // can't leave us encrypting to a stale key they can no longer decrypt.
+        val peerPub = contacts.publicKeyOf(peerId, forceRefresh = true) ?: return
         val sealed = crypto.encrypt(peerPub, myPriv, trimmed)
         val id = Ulid.generate()
         val now = System.currentTimeMillis()
@@ -145,7 +147,7 @@ class ChatRepository @Inject constructor(
         sourceFile: File?,
     ) {
         val myPriv = store.identity().privateKey
-        val peerPub = contacts.publicKeyOf(peerId) ?: return
+        val peerPub = contacts.publicKeyOf(peerId, forceRefresh = true) ?: return
         val env = media.upload(bytes, kind, mimeType, durationMs)
         sourceFile?.let { media.cacheLocal(env, it) }
 
@@ -173,6 +175,22 @@ class ChatRepository @Inject constructor(
                 messageDao.updateStatus(id, "sent")
             }
         }
+    }
+
+    /**
+     * Decrypt with the peer's cached key; if that fails, the cache may be stale
+     * (peer reinstalled → new key), so refetch their CURRENT key and retry once.
+     */
+    private suspend fun decryptWithRetry(peerId: String, myPriv: String, ciphertext: String, nonce: String): String {
+        val cachedPub = contacts.publicKeyOf(peerId)
+        if (cachedPub != null) {
+            crypto.decrypt(cachedPub, myPriv, ciphertext, nonce)?.let { return it }
+        }
+        val freshPub = contacts.publicKeyOf(peerId, forceRefresh = true)
+        if (freshPub != null && freshPub != cachedPub) {
+            crypto.decrypt(freshPub, myPriv, ciphertext, nonce)?.let { return it }
+        }
+        return if (cachedPub == null && freshPub == null) "🔒 Encrypted" else "🔒 Unable to decrypt"
     }
 
     private fun mediaPreview(kind: String): String = when (kind) {
@@ -220,10 +238,7 @@ class ChatRepository @Inject constructor(
     private suspend fun store(dto: MessageDto, peerId: String) {
         val mine = dto.senderId == store.userId
         val myPriv = store.identity().privateKey
-        val peerPub = contacts.publicKeyOf(peerId)
-        val text = if (peerPub != null) {
-            crypto.decrypt(peerPub, myPriv, dto.ciphertext, dto.nonce) ?: "🔒 Unable to decrypt"
-        } else "🔒 Encrypted"
+        val text = decryptWithRetry(peerId, myPriv, dto.ciphertext, dto.nonce)
         messageDao.upsert(
             MessageEntity(
                 id = dto.id, conversationId = dto.conversationId, senderId = dto.senderId, mine = mine,

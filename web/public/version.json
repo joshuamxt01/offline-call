@@ -1,5 +1,5 @@
 {
-  "versionCode": 7,
-  "versionName": "0.2.5",
-  "notes": "You can now send photos in chat — tap the image icon in a conversation to pick and send a picture (end-to-end encrypted like everything else). Tap Update to install."
+  "versionCode": 8,
+  "versionName": "0.2.6",
+  "notes": "Fixes 'Unable to decrypt' messages. The app now always uses each person's current encryption key, so messages send and read correctly even after someone reinstalls. Update BOTH devices, then send a new message (older undecryptable messages can't be recovered)."
 }
