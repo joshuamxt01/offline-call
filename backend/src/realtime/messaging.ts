@@ -6,6 +6,7 @@ import {
   rtMessageDeliveredSchema,
   rtMessageReadSchema,
   rtTypingSchema,
+  rtReactionSchema,
   type Ack,
 } from "@nexa/shared";
 import * as messagesService from "../modules/messages/messages.service.js";
@@ -46,6 +47,18 @@ export function registerMessaging(nsp: Namespace, socket: Socket): void {
       }
     },
   );
+
+  socket.on(ClientEvents.ReactionSet, async (payload) => {
+    const parsed = rtReactionSchema.safeParse(payload);
+    if (!parsed.success) return;
+    const { messageId, emoji, action } = parsed.data;
+    const meta = await messagesService.setReaction(messageId, userId, emoji, action).catch(() => null);
+    if (!meta) return;
+    const members = await memberIds(meta.conversationId);
+    for (const m of members) {
+      nsp.to(userRoom(m)).emit(ServerEvents.ReactionUpdate, { messageId, userId, emoji, action });
+    }
+  });
 
   socket.on(ClientEvents.MessageDelivered, async (payload) => {
     const parsed = rtMessageDeliveredSchema.safeParse(payload);

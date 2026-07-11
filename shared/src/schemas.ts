@@ -77,6 +77,7 @@ export const sendMessageSchema = z.object({
   ciphertext: b64,
   nonce: b64,
   mediaObjectId: z.string().uuid().nullish(),
+  replyToId: z.string().max(30).nullish(), // ULID of the message being replied to
   clientCreatedAt: z.string().datetime(),
 });
 
@@ -115,6 +116,11 @@ export const rtMessageReadSchema = z.object({
   upToMessageId: z.string(),
 });
 export const rtTypingSchema = z.object({ conversationId: z.string().uuid() });
+export const rtReactionSchema = z.object({
+  messageId: z.string().max(30),
+  emoji: z.string().min(1).max(16),
+  action: z.enum(["add", "remove"]),
+});
 export const rtCallInviteSchema = z.object({
   callId: z.string().uuid(),
   calleeId: z.string().uuid(),

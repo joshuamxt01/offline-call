@@ -108,9 +108,17 @@ export interface MessageDto {
   ciphertext: string; // base64 (server cannot read)
   nonce: string; // base64
   mediaObjectId: string | null;
+  replyToId?: string | null;
   clientCreatedAt: string;
   serverCreatedAt: string;
   status: "sent" | "delivered" | "read";
+  reactions?: MessageReactionDto[];
+}
+
+export interface MessageReactionDto {
+  messageId: string;
+  userId: string;
+  emoji: string;
 }
 
 export interface CallDto {

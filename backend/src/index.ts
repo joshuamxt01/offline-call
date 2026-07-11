@@ -7,6 +7,25 @@ import { sql } from "./config/db.js";
 import { redis, pubClient, subClient } from "./config/redis.js";
 import { purgeExpiredTokens } from "./modules/auth/auth.service.js";
 
+// Idempotent schema-ensure (the deploy has no migration step). Safe to run every
+// boot — only creates/alters if missing. Never crash the server on failure.
+async function ensureSchema() {
+  try {
+    await sql`ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to text`;
+    await sql`CREATE TABLE IF NOT EXISTS message_reactions (
+      message_id text NOT NULL,
+      user_id uuid NOT NULL,
+      emoji text NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      PRIMARY KEY (message_id, user_id, emoji)
+    )`;
+    logger.info("schema ensured (reply_to, message_reactions)");
+  } catch (err) {
+    logger.error({ err }, "ensureSchema failed (continuing)");
+  }
+}
+await ensureSchema();
+
 const app = createApp();
 const httpServer = createServer(app);
 const io = initRealtime(httpServer);

@@ -172,6 +172,7 @@ export const messages = pgTable(
     ciphertext: bytea("ciphertext").notNull(),
     nonce: bytea("nonce").notNull(),
     mediaObjectId: uuid("media_object_id"),
+    replyTo: text("reply_to"), // id of the message this one replies to (optional)
     clientCreatedAt: timestamp("client_created_at", { withTimezone: true }).notNull(),
     serverCreatedAt: timestamp("server_created_at", { withTimezone: true })
       .notNull()
@@ -197,6 +198,19 @@ export const messageReceipts = pgTable(
     readAt: timestamp("read_at", { withTimezone: true }),
   },
   (t) => ({ pk: primaryKey({ columns: [t.messageId, t.userId] }) }),
+);
+
+export const messageReactions = pgTable(
+  "message_reactions",
+  {
+    messageId: text("message_id").notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    emoji: text("emoji").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.messageId, t.userId, t.emoji] }) }),
 );
 
 export const calls = pgTable(

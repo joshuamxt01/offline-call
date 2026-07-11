@@ -10,6 +10,7 @@ export const ClientEvents = {
   MessageSend: "message:send",
   MessageDelivered: "message:delivered",
   MessageRead: "message:read",
+  ReactionSet: "reaction:set",
   TypingStart: "typing:start",
   TypingStop: "typing:stop",
 
@@ -28,6 +29,7 @@ export const ServerEvents = {
 
   MessageNew: "message:new",
   MessageReceipt: "message:receipt",
+  ReactionUpdate: "reaction:update",
   Typing: "typing",
 
   CallIncoming: "call:incoming",

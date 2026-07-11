@@ -60,6 +60,7 @@ export function toMessageDto(m: MessageRow): MessageDto {
     ciphertext: Buffer.from(m.ciphertext).toString("base64"),
     nonce: Buffer.from(m.nonce).toString("base64"),
     mediaObjectId: m.mediaObjectId,
+    replyToId: m.replyTo ?? null,
     clientCreatedAt: m.clientCreatedAt.toISOString(),
     serverCreatedAt: m.serverCreatedAt.toISOString(),
     status: m.status as MessageDto["status"],

@@ -1,9 +1,9 @@
 import { and, eq, gt, lt, ne, sql, inArray } from "drizzle-orm";
 import { db } from "../../config/db.js";
-import { messages, messageReceipts, conversationMembers } from "../../db/schema.js";
+import { messages, messageReceipts, conversationMembers, messageReactions } from "../../db/schema.js";
 import { memberIds, ensureMember } from "../conversations/conversations.service.js";
 import { toMessageDto } from "../../lib/mappers.js";
-import type { MessageDto, MessageType } from "@nexa/shared";
+import type { MessageDto, MessageType, MessageReactionDto } from "@nexa/shared";
 
 export interface PersistInput {
   id: string;
@@ -13,6 +13,7 @@ export interface PersistInput {
   ciphertext: string; // base64
   nonce: string; // base64
   mediaObjectId?: string | null;
+  replyToId?: string | null;
   clientCreatedAt: string;
 }
 
@@ -36,6 +37,7 @@ export async function persist(
       ciphertext: Buffer.from(input.ciphertext, "base64"),
       nonce: Buffer.from(input.nonce, "base64"),
       mediaObjectId: input.mediaObjectId ?? null,
+      replyTo: input.replyToId ?? null,
       clientCreatedAt: new Date(input.clientCreatedAt),
       status: "sent",
     })
@@ -79,7 +81,52 @@ export async function history(
     )
     .orderBy(sql`${messages.serverCreatedAt} desc`)
     .limit(Math.min(limit, 100));
-  return rows.map(toMessageDto).reverse();
+  const dtos = rows.map(toMessageDto).reverse();
+  await attachReactions(dtos);
+  return dtos;
+}
+
+/** Fill each message's `reactions` array (batched by message id). */
+async function attachReactions(dtos: MessageDto[]): Promise<void> {
+  if (!dtos.length) return;
+  const ids = dtos.map((d) => d.id);
+  const rows = await db
+    .select({ messageId: messageReactions.messageId, userId: messageReactions.userId, emoji: messageReactions.emoji })
+    .from(messageReactions)
+    .where(inArray(messageReactions.messageId, ids));
+  const byMsg = new Map<string, MessageReactionDto[]>();
+  for (const r of rows) {
+    const list = byMsg.get(r.messageId) ?? [];
+    list.push(r);
+    byMsg.set(r.messageId, list);
+  }
+  for (const d of dtos) d.reactions = byMsg.get(d.id) ?? [];
+}
+
+/** Add or remove a reaction; returns the message's conversation + sender for fan-out. */
+export async function setReaction(
+  messageId: string,
+  userId: string,
+  emoji: string,
+  action: "add" | "remove",
+): Promise<{ conversationId: string; senderId: string } | null> {
+  const meta = await getMeta(messageId);
+  if (!meta) return null;
+  await ensureMember(meta.conversationId, userId); // authorize: must be in the conversation
+  if (action === "add") {
+    await db.insert(messageReactions).values({ messageId, userId, emoji }).onConflictDoNothing();
+  } else {
+    await db
+      .delete(messageReactions)
+      .where(
+        and(
+          eq(messageReactions.messageId, messageId),
+          eq(messageReactions.userId, userId),
+          eq(messageReactions.emoji, emoji),
+        ),
+      );
+  }
+  return meta;
 }
 
 export async function getMeta(
