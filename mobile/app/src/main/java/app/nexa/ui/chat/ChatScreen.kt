@@ -9,8 +9,10 @@ import android.widget.VideoView
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -28,7 +30,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -48,6 +54,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -232,29 +239,80 @@ private fun VoiceNote(env: MediaEnvelope, mine: Boolean, resolve: suspend (Media
     val player = remember { MediaPlayer() }
     var playing by remember { mutableStateOf(false) }
     var prepared by remember { mutableStateOf(false) }
+    var progress by remember { mutableFloatStateOf(0f) } // 0..1
     DisposableEffect(Unit) { onDispose { runCatching { player.release() } } }
+
+    // Advance the waveform fill while playing.
+    LaunchedEffect(playing) {
+        while (playing) {
+            val dur = player.duration.takeIf { it > 0 } ?: 1
+            progress = (player.currentPosition.toFloat() / dur).coerceIn(0f, 1f)
+            delay(80)
+        }
+    }
+
+    suspend fun ensurePrepared(): Boolean {
+        if (prepared) return true
+        val f = resolve(env) ?: return false
+        withContext(Dispatchers.IO) { player.setDataSource(f.absolutePath); player.prepare() }
+        prepared = true
+        player.setOnCompletionListener { playing = false; progress = 0f }
+        return true
+    }
 
     fun toggle() {
         if (playing) { player.pause(); playing = false; return }
-        if (prepared) { player.start(); playing = true; return }
-        scope.launch {
-            val f = resolve(env) ?: return@launch
-            withContext(Dispatchers.IO) {
-                player.setDataSource(f.absolutePath)
-                player.prepare()
-            }
-            prepared = true
-            player.setOnCompletionListener { playing = false }
-            player.start(); playing = true
+        scope.launch { if (ensurePrepared()) { player.start(); playing = true } }
+    }
+
+    fun seekTo(fraction: Float) = scope.launch {
+        if (ensurePrepared()) {
+            player.seekTo((player.duration * fraction).toInt())
+            progress = fraction
+            if (!playing) { player.start(); playing = true }
         }
     }
 
     val fg = if (mine) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.widthIn(min = 160.dp).padding(vertical = 2.dp)) {
+    val bars = remember(env.mediaObjectId) { waveformBars(env.mediaObjectId) }
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.widthIn(min = 200.dp).padding(vertical = 2.dp)) {
         IconButton(onClick = ::toggle) {
             Icon(if (playing) Icons.Default.Pause else Icons.Default.PlayArrow, "Play", tint = fg)
         }
-        Text("🎤 ${TimeUtil.formatDuration((env.durationMs / 1000).toInt())}", color = fg)
+        Canvas(
+            Modifier.weight(1f).height(28.dp)
+                .pointerInput(Unit) {
+                    detectTapGestures { o -> seekTo((o.x / size.width).coerceIn(0f, 1f)) }
+                },
+        ) {
+            val n = bars.size
+            val gap = 3.dp.toPx()
+            val barW = ((size.width - gap * (n - 1)) / n).coerceAtLeast(1f)
+            val playedX = size.width * progress
+            bars.forEachIndexed { i, h ->
+                val x = i * (barW + gap)
+                val barH = (size.height * h).coerceAtLeast(2f)
+                val y = (size.height - barH) / 2f
+                drawRoundRect(
+                    color = if (x <= playedX) fg else fg.copy(alpha = 0.35f),
+                    topLeft = Offset(x, y),
+                    size = Size(barW, barH),
+                    cornerRadius = CornerRadius(barW / 2f, barW / 2f),
+                )
+            }
+        }
+        Spacer(Modifier.width(8.dp))
+        Text(TimeUtil.formatDuration((env.durationMs / 1000).toInt()), color = fg, style = MaterialTheme.typography.labelSmall)
+    }
+}
+
+/** Deterministic pseudo-waveform (bar heights 0.3..1.0) seeded by the media id,
+ *  so a given voice note always renders the same shape. */
+private fun waveformBars(seed: String): List<Float> {
+    var h = seed.hashCode()
+    return List(28) {
+        h = h * 1103515245 + 12345
+        0.3f + (((h ushr 16) and 0x7fff) / 32767f) * 0.7f
     }
 }
 

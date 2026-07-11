@@ -1,5 +1,5 @@
 {
-  "versionCode": 10,
-  "versionName": "0.2.8",
-  "notes": "New: emoji picker in chats, and push notifications — you'll now get alerted about new messages and calls even when the app is closed (no Google/Firebase; it uses your own server). Tap Update to install."
+  "versionCode": 11,
+  "versionName": "0.2.9",
+  "notes": "Voice notes now show a waveform you can tap to scrub/seek while playing. Tap Update to install."
 }
