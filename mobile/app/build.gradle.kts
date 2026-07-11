@@ -15,8 +15,8 @@ android {
         applicationId = "app.nexa"
         minSdk = 24
         targetSdk = 34
-        versionCode = 4
-        versionName = "0.2.2"
+        versionCode = 5
+        versionName = "0.2.3"
 
         // Point the app at your backend. Local dev: the Android emulator reaches
         // the host machine at 10.0.2.2. Override in local.properties / CI.

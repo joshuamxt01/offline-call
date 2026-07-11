@@ -8,7 +8,7 @@ import {
 import { contactsApi, usersApi, conversationsApi } from "@/lib/api/endpoints";
 import { useSocket } from "@/lib/realtime/socket";
 import { ServerEvents, type UserPublic, type ContactDto, type PresenceState } from "@nexa/shared";
-import { Avatar, EmptyState, Badge, Spinner } from "@/components/ui/misc";
+import { Avatar, EmptyState, Badge, Spinner, FullPageLoader } from "@/components/ui/misc";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useCall } from "@/lib/webrtc/CallProvider";
@@ -136,7 +136,7 @@ export default function ContactsPage() {
         {/* All contacts */}
         <Section title="My contacts">
           {contacts.isLoading ? (
-            <div className="flex justify-center py-10"><Spinner /></div>
+            <FullPageLoader label="Loading contacts…" />
           ) : accepted.length ? (
             accepted.map((c) => (
               <ContactRow key={c.id} c={c} onChat={openChat} startCall={startCall} fav={fav} block={block} remove={remove} />

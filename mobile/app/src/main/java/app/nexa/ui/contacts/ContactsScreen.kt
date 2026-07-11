@@ -16,6 +16,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.nexa.domain.model.CallType
 import app.nexa.domain.model.UiContact
 import app.nexa.ui.common.Avatar
+import app.nexa.ui.common.LoadingBox
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,6 +25,7 @@ fun ContactsScreen(
     vm: ContactsViewModel = hiltViewModel(),
 ) {
     val contacts by vm.contactList.collectAsStateWithLifecycle()
+    val loading by vm.loading.collectAsStateWithLifecycle()
     val accepted = contacts.filter { it.state == "accepted" }
     val incoming = contacts.filter { it.state == "pending" && it.incoming }
     val sent = contacts.filter { it.state == "pending" && !it.incoming }
@@ -40,6 +42,11 @@ fun ContactsScreen(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         )
         Spacer(Modifier.height(8.dp))
+
+        if (loading && contacts.isEmpty() && vm.searchResults.isEmpty()) {
+            LoadingBox("Loading contacts…")
+            return@Column
+        }
 
         LazyColumn(Modifier.fillMaxSize()) {
             if (vm.searchResults.isNotEmpty()) {

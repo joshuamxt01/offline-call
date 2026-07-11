@@ -1,5 +1,5 @@
 {
-  "versionCode": 4,
-  "versionName": "0.2.2",
-  "notes": "Fixes the crash that closed the app when opening the Contacts tab. Tabs now stay open even when the server is slow or unreachable. Update to stay stable."
+  "versionCode": 5,
+  "versionName": "0.2.3",
+  "notes": "In-app updates now install properly (with an Install button and the Android permission step), a new loading animation across the app, and smoother screens. If tapping Update doesn't finish, download from the website once — future updates will install in one tap."
 }

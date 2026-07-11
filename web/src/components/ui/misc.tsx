@@ -51,6 +51,24 @@ export function Spinner({ className }: { className?: string }) {
   );
 }
 
+/**
+ * Full-area branded loading animation: a pulsing Nexa mark with a spinning ring
+ * and an optional caption. Use for route transitions and first-load states.
+ */
+export function FullPageLoader({ label = "Loading…" }: { label?: string }) {
+  return (
+    <div className="flex min-h-[60vh] w-full flex-1 flex-col items-center justify-center gap-4">
+      <div className="relative h-16 w-16">
+        <span className="absolute inset-0 animate-spin rounded-full border-[3px] border-primary/20 border-t-primary" />
+        <span className="absolute inset-2 flex items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent font-bold text-primary-foreground animate-pulse">
+          N
+        </span>
+      </div>
+      {label && <p className="text-sm text-muted-foreground animate-pulse">{label}</p>}
+    </div>
+  );
+}
+
 export function Avatar({
   name,
   src,

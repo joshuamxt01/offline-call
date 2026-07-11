@@ -23,16 +23,20 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.nexa.core.TimeUtil
 import app.nexa.domain.model.UiCallHistory
+import app.nexa.ui.common.LoadingBox
 import app.nexa.ui.theme.Success
 import app.nexa.ui.theme.Teal
 
 @Composable
 fun CallsScreen(vm: CallsViewModel = hiltViewModel()) {
     val calls by vm.calls.collectAsStateWithLifecycle()
+    val loading by vm.loading.collectAsStateWithLifecycle()
 
     Column(Modifier.fillMaxSize()) {
         Text("Calls", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
-        if (calls.isEmpty()) {
+        if (loading && calls.isEmpty()) {
+            LoadingBox("Loading calls…")
+        } else if (calls.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("No calls yet.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }

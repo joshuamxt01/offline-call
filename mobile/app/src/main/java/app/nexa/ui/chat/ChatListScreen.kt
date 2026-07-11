@@ -16,6 +16,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.nexa.core.TimeUtil
 import app.nexa.ui.common.Avatar
+import app.nexa.ui.common.LoadingBox
 import app.nexa.ui.common.clickableNoRipple
 
 @Composable
@@ -24,10 +25,13 @@ fun ChatListScreen(
     vm: ChatListViewModel = hiltViewModel(),
 ) {
     val conversations by vm.conversations.collectAsStateWithLifecycle()
+    val loading by vm.loading.collectAsStateWithLifecycle()
 
     Column(Modifier.fillMaxSize()) {
         Text("Chats", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
-        if (conversations.isEmpty()) {
+        if (loading && conversations.isEmpty()) {
+            LoadingBox("Loading chats…")
+        } else if (conversations.isEmpty()) {
             Column(
                 Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,

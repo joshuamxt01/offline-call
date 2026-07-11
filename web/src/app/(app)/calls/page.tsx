@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { PhoneIncoming, PhoneOutgoing, PhoneMissed, Video, Phone as PhoneIcon } from "lucide-react";
 import { callsApi } from "@/lib/api/endpoints";
 import { useAuthStore } from "@/lib/store/auth";
-import { EmptyState, Spinner, Badge } from "@/components/ui/misc";
+import { EmptyState, FullPageLoader, Badge } from "@/components/ui/misc";
 import { formatDay, formatDuration, formatTime } from "@/lib/utils";
 import type { CallDto } from "@nexa/shared";
 
@@ -19,7 +19,7 @@ export default function CallsPage() {
 
       <div className="scroll-thin flex-1 overflow-y-auto">
         {calls.isLoading ? (
-          <div className="flex justify-center py-12"><Spinner /></div>
+          <FullPageLoader label="Loading calls…" />
         ) : calls.data?.length ? (
           <ul className="divide-y divide-border">
             {calls.data.map((c) => (

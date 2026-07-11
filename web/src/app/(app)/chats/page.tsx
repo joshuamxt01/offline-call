@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { MessageSquarePlus, MessagesSquare } from "lucide-react";
 import { conversationsApi } from "@/lib/api/endpoints";
 import { useAuthStore } from "@/lib/store/auth";
-import { Avatar, EmptyState, Badge, Spinner } from "@/components/ui/misc";
+import { Avatar, EmptyState, Badge, FullPageLoader } from "@/components/ui/misc";
 import { Button } from "@/components/ui/Button";
 import { formatDay } from "@/lib/utils";
 
@@ -23,7 +23,7 @@ export default function ChatsPage() {
 
       <div className="scroll-thin flex-1 overflow-y-auto">
         {convos.isLoading ? (
-          <div className="flex justify-center py-12"><Spinner /></div>
+          <FullPageLoader label="Loading chats…" />
         ) : convos.data?.length ? (
           <ul className="divide-y divide-border">
             {convos.data.map((c) => {

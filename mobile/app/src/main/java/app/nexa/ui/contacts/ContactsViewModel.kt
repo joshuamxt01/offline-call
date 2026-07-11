@@ -14,6 +14,7 @@ import app.nexa.data.repository.ContactsRepository
 import app.nexa.domain.model.CallType
 import app.nexa.domain.model.UiContact
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -36,8 +37,14 @@ class ContactsViewModel @Inject constructor(
     var searchResults by mutableStateOf<List<UserDto>>(emptyList())
         private set
 
+    private val _loading = MutableStateFlow(true)
+    val loading: StateFlow<Boolean> = _loading
+
     init {
-        viewModelScope.launch { runCatching { contacts.refresh() } }
+        viewModelScope.launch {
+            runCatching { contacts.refresh() }
+            _loading.value = false
+        }
         viewModelScope.launch { runCatching { socket.presenceEvents.collect { contacts.refresh() } } }
     }
 

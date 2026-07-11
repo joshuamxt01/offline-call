@@ -20,17 +20,23 @@ class CallsViewModel @Inject constructor(
     private val _calls = MutableStateFlow<List<UiCallHistory>>(emptyList())
     val calls: StateFlow<List<UiCallHistory>> = _calls
 
+    private val _loading = MutableStateFlow(true)
+    val loading: StateFlow<Boolean> = _loading
+
     init { refresh() }
 
     fun refresh() = viewModelScope.launch {
         val me = store.userId
-        val remote = runCatching { api.calls().data }.getOrNull() ?: return@launch
-        _calls.value = remote.map {
-            UiCallHistory(
-                id = it.id, type = it.type, status = it.status, transport = it.transport,
-                outgoing = it.callerId == me,
-                startedAt = TimeUtil.parseIso(it.startedAt), durationSeconds = it.durationSeconds,
-            )
+        val remote = runCatching { api.calls().data }.getOrNull()
+        if (remote != null) {
+            _calls.value = remote.map {
+                UiCallHistory(
+                    id = it.id, type = it.type, status = it.status, transport = it.transport,
+                    outgoing = it.callerId == me,
+                    startedAt = TimeUtil.parseIso(it.startedAt), durationSeconds = it.durationSeconds,
+                )
+            }
         }
+        _loading.value = false
     }
 }
