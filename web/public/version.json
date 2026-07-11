@@ -1,5 +1,5 @@
 {
-  "versionCode": 5,
-  "versionName": "0.2.3",
-  "notes": "In-app updates now install properly (with an Install button and the Android permission step), a new loading animation across the app, and smoother screens. If tapping Update doesn't finish, download from the website once — future updates will install in one tap."
+  "versionCode": 6,
+  "versionName": "0.2.4",
+  "notes": "Voice notes and video notes now work: the app asks for mic/camera permission the moment you record. New built-in video recorder with a front/back camera flip and a 60-second timer. Tap Update to install."
 }

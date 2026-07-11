@@ -1,11 +1,10 @@
 package app.nexa.ui.chat
 
+import android.Manifest
 import android.media.MediaMetadataRetriever
 import android.media.MediaPlayer
 import android.widget.MediaController
 import android.widget.VideoView
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -23,11 +22,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.nexa.core.TimeUtil
@@ -35,18 +32,20 @@ import app.nexa.data.protocol.MediaEnvelope
 import app.nexa.domain.model.CallType
 import app.nexa.domain.model.ChatMessage
 import app.nexa.ui.common.Avatar
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun ChatScreen(
     onBack: () -> Unit,
     vm: ChatViewModel = hiltViewModel(),
 ) {
-    val context = LocalContext.current
     val messages by vm.messages.collectAsStateWithLifecycle()
     val typing by vm.peerTyping.collectAsStateWithLifecycle()
     val recording by vm.recording.collectAsStateWithLifecycle()
@@ -58,25 +57,37 @@ fun ChatScreen(
         if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size)
     }
 
-    // Video capture via the system camera → returns to a FileProvider Uri.
-    var pendingVideo by remember { mutableStateOf<File?>(null) }
-    val captureVideo = rememberLauncherForActivityResult(ActivityResultContracts.CaptureVideo()) { success ->
-        val f = pendingVideo
-        if (success && f != null && f.length() > 0) {
-            val duration = runCatching {
-                val r = MediaMetadataRetriever()
-                r.setDataSource(f.absolutePath)
-                val d = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
-                r.release(); d
-            }.getOrDefault(0L)
-            vm.sendVideo(f.readBytes(), duration, f)
+    // In-app CameraX video-note recorder (with front/back flip).
+    var showRecorder by remember { mutableStateOf(false) }
+    if (showRecorder) {
+        VideoRecorderScreen(
+            onCancel = { showRecorder = false },
+            onRecorded = { f ->
+                val duration = runCatching {
+                    val r = MediaMetadataRetriever()
+                    r.setDataSource(f.absolutePath)
+                    val d = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
+                    r.release(); d
+                }.getOrDefault(0L)
+                vm.sendVideo(f.readBytes(), duration, f)
+                showRecorder = false
+            },
+        )
+        return
+    }
+
+    // Voice notes need the mic permission — request on demand, then start recording.
+    val micPermission = rememberPermissionState(Manifest.permission.RECORD_AUDIO)
+    var pendingVoiceStart by remember { mutableStateOf(false) }
+    LaunchedEffect(micPermission.status) {
+        if (pendingVoiceStart && micPermission.status.isGranted) {
+            pendingVoiceStart = false
+            vm.startVoice()
         }
     }
-    fun launchVideoCapture() {
-        val f = File(context.cacheDir, "vid_${System.currentTimeMillis()}.mp4")
-        pendingVideo = f
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", f)
-        captureVideo.launch(uri)
+    fun requestVoice() {
+        if (micPermission.status.isGranted) vm.startVoice()
+        else { pendingVoiceStart = true; micPermission.launchPermissionRequest() }
     }
 
     Scaffold(
@@ -124,8 +135,8 @@ fun ChatScreen(
                             Icon(Icons.AutoMirrored.Filled.Send, "Send")
                         }
                     } else {
-                        IconButton(onClick = ::launchVideoCapture) { Icon(Icons.Default.Videocam, "Record video message") }
-                        FilledIconButton(onClick = vm::startVoice) { Icon(Icons.Default.Mic, "Record voice message") }
+                        IconButton(onClick = { showRecorder = true }) { Icon(Icons.Default.Videocam, "Record video message") }
+                        FilledIconButton(onClick = { requestVoice() }) { Icon(Icons.Default.Mic, "Record voice message") }
                     }
                 }
             }

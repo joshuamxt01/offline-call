@@ -15,8 +15,8 @@ android {
         applicationId = "app.nexa"
         minSdk = 24
         targetSdk = 34
-        versionCode = 5
-        versionName = "0.2.3"
+        versionCode = 6
+        versionName = "0.2.4"
 
         // Point the app at your backend. Local dev: the Android emulator reaches
         // the host machine at 10.0.2.2. Override in local.properties / CI.
@@ -102,4 +102,11 @@ dependencies {
 
     implementation(libs.coil.compose)
     implementation(libs.accompanist.permissions)
+
+    // CameraX — in-app video-note recorder with front/back flip
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.video)
+    implementation(libs.androidx.camera.view)
 }
