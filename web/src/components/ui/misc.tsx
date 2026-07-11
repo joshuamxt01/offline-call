@@ -1,6 +1,12 @@
 "use client";
-import { type HTMLAttributes, type ReactNode } from "react";
+import { useState, type HTMLAttributes, type ReactNode } from "react";
 import { cn, initials } from "@/lib/utils";
+
+/** Public URL that redirects to a user's profile picture (or 404 → initials). */
+export function avatarUrl(userId: string, version?: string | null): string {
+  const base = process.env.NEXT_PUBLIC_API_URL ?? "";
+  return `${base}/api/v1/users/${userId}/avatar${version ? `?v=${version}` : ""}`;
+}
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
@@ -72,25 +78,37 @@ export function FullPageLoader({ label = "Loading…" }: { label?: string }) {
 export function Avatar({
   name,
   src,
+  userId,
+  avatarVersion,
   size = 44,
   online,
   className,
 }: {
   name?: string | null;
   src?: string | null;
+  userId?: string | null;
+  avatarVersion?: string | null;
   size?: number;
   online?: boolean;
   className?: string;
 }) {
+  const [failed, setFailed] = useState(false);
+  const url = src ?? (userId ? avatarUrl(userId, avatarVersion) : null);
+  const showImg = url && !failed;
   return (
     <div className={cn("relative shrink-0", className)} style={{ width: size, height: size }}>
       <div
-        className="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent font-semibold uppercase text-primary-foreground"
+        className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary to-accent font-semibold uppercase text-primary-foreground"
         style={{ fontSize: size * 0.4 }}
       >
-        {src ? (
+        {showImg ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={src} alt={name ?? ""} className="h-full w-full rounded-full object-cover" />
+          <img
+            src={url}
+            alt={name ?? ""}
+            onError={() => setFailed(true)}
+            className="h-full w-full rounded-full object-cover"
+          />
         ) : (
           initials(name)
         )}

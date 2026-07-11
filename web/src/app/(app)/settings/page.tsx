@@ -1,9 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { LogOut, Smartphone, Trash2, ShieldCheck, Monitor, Globe, Lock, Users } from "lucide-react";
 import type { UserPrivacy } from "@nexa/shared";
 import { devicesApi, usersApi } from "@/lib/api/endpoints";
+import { uploadAvatar } from "@/lib/media/mediaClient";
 import { useAuthStore } from "@/lib/store/auth";
 import { useAuthActions } from "@/lib/hooks/useAuthActions";
 import { getIdentity } from "@/lib/crypto/e2ee";
@@ -38,6 +39,19 @@ export default function SettingsPage() {
     onSuccess: (u) => setUser(u),
   });
 
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [avatarVersion, setAvatarVersion] = useState<string | null>(user?.avatarObjectId ?? null);
+  const changeAvatar = useMutation({
+    mutationFn: async (file: File) => {
+      const objectId = await uploadAvatar(file);
+      return usersApi.updateProfile({ avatarObjectId: objectId });
+    },
+    onSuccess: (u) => {
+      setUser(u);
+      setAvatarVersion(u.avatarObjectId ?? String(Date.now()));
+    },
+  });
+
   const savePrivacy = useMutation({
     mutationFn: () => usersApi.updateProfile({ privacy, statusKind, statusMessage: statusMessage || null }),
     onSuccess: (u) => setUser(u),
@@ -58,10 +72,31 @@ export default function SettingsPage() {
         {/* Profile */}
         <Card className="p-5">
           <div className="mb-4 flex items-center gap-4">
-            <Avatar name={displayName || user?.username} size={64} />
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) changeAvatar.mutate(f);
+                e.target.value = "";
+              }}
+            />
+            <button onClick={() => fileRef.current?.click()} className="relative shrink-0" aria-label="Change photo">
+              <Avatar name={displayName || user?.username} size={64} userId={user?.id} avatarVersion={avatarVersion} />
+              {changeAvatar.isPending && (
+                <span className="absolute inset-0 grid place-items-center rounded-full bg-black/40">
+                  <Spinner />
+                </span>
+              )}
+            </button>
             <div>
               <h2 className="font-semibold">{user?.displayName ?? user?.username}</h2>
               <p className="text-sm text-muted-foreground">@{user?.username}</p>
+              <button onClick={() => fileRef.current?.click()} className="text-sm text-primary hover:underline">
+                Change photo
+              </button>
             </div>
           </div>
           <div className="space-y-4">

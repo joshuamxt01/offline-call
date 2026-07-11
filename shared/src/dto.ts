@@ -33,6 +33,8 @@ export interface UserPublic {
   username: string;
   displayName: string | null;
   avatarUrl: string | null;
+  /** Set when the user has a profile picture. Fetch it at GET /users/:id/avatar. */
+  avatarObjectId?: string | null;
   bio: string | null;
   /** Chosen availability, shown when privacy allows. Optional (additive). */
   statusKind?: StatusKind;

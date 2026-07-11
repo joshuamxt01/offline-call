@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authRouter } from "./modules/auth/auth.routes.js";
 import { usersRouter } from "./modules/users/users.routes.js";
+import { avatarRouter } from "./modules/users/avatar.routes.js";
 import { contactsRouter } from "./modules/contacts/contacts.routes.js";
 import { devicesRouter } from "./modules/devices/devices.routes.js";
 import { keysRouter } from "./modules/keys/keys.routes.js";
@@ -23,6 +24,7 @@ apiRouter.use("/auth", authRouter);
 apiRouter.use("/admin/access", accessRouter); // before /admin so this matches first
 apiRouter.use("/admin", adminRouter);
 
+apiRouter.use("/users", avatarRouter); // public GET /users/:id/avatar (no auth) — must precede the authed router
 apiRouter.use("/users", enforceNetworkLock, usersRouter);
 apiRouter.use("/contacts", enforceNetworkLock, contactsRouter);
 apiRouter.use("/devices", enforceNetworkLock, devicesRouter);

@@ -53,7 +53,7 @@ export function CallOverlay() {
                     <span className="absolute inset-0 animate-pulse-ring rounded-full bg-primary/30 [animation-delay:0.5s]" />
                   </>
                 )}
-                <Avatar name={call.peerName ?? "Contact"} size={132} />
+                <Avatar name={call.peerName ?? "Contact"} size={132} userId={call.peerId} />
               </div>
               <div className="text-center">
                 <h2 className="text-2xl font-semibold">{call.peerName ?? "Nexa contact"}</h2>

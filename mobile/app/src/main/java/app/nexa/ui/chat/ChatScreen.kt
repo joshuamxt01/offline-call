@@ -134,7 +134,7 @@ fun ChatScreen(
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Avatar(name = vm.peerName, size = 38.dp)
+                        Avatar(name = vm.peerName, size = 38.dp, userId = vm.peerId.takeIf { it.isNotEmpty() })
                         Spacer(Modifier.width(10.dp))
                         Column {
                             Text(vm.peerName, style = MaterialTheme.typography.titleMedium)

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -54,17 +55,39 @@ fun SettingsScreen(
     // Stop any running preview when leaving Settings.
     DisposableEffect(Unit) { onDispose { vm.stopPreview() } }
 
+    val avatarVersion by vm.avatarVersion.collectAsStateWithLifecycle()
+    val uploadingAvatar by vm.uploadingAvatar.collectAsStateWithLifecycle()
+    val pickAvatar = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) {
+            val bytes = runCatching { context.contentResolver.openInputStream(uri)?.use { it.readBytes() } }.getOrNull()
+            val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
+            if (bytes != null && bytes.isNotEmpty()) vm.uploadAvatar(bytes, mime)
+        }
+    }
+
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         Text("Settings", style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(16.dp))
 
         // Profile
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Avatar(name = vm.username, size = 64.dp)
+            Box {
+                Avatar(name = vm.username, size = 64.dp, userId = vm.userId, avatarVersion = avatarVersion)
+                if (uploadingAvatar) {
+                    CircularProgressIndicator(
+                        Modifier.align(Alignment.Center).size(28.dp),
+                        strokeWidth = 2.dp,
+                    )
+                }
+            }
             Spacer(Modifier.width(16.dp))
             Column {
                 Text(vm.username, style = MaterialTheme.typography.titleMedium)
                 Text("@${vm.username}", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                TextButton(
+                    onClick = { pickAvatar.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                    contentPadding = PaddingValues(0.dp),
+                ) { Text("Change photo") }
             }
         }
         Spacer(Modifier.height(20.dp))

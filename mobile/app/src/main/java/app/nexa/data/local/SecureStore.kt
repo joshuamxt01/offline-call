@@ -62,7 +62,16 @@ class SecureStore @Inject constructor(
     var serverUrl: String
         get() = prefs.getString(K_SERVER, null)?.takeIf { it.isNotBlank() }
             ?: app.nexa.BuildConfig.API_BASE_URL
-        set(v) = prefs.edit().putString(K_SERVER, v.trim().trimEnd('/')).apply()
+        set(v) {
+            val clean = v.trim().trimEnd('/')
+            prefs.edit().putString(K_SERVER, clean).apply()
+            app.nexa.data.remote.ServerConfig.baseUrl = clean
+        }
+
+    init {
+        // Keep ServerConfig (used by Coil for avatar URLs) in sync with the saved server.
+        app.nexa.data.remote.ServerConfig.baseUrl = serverUrl
+    }
 
     /** Selected incoming-call ringtone: a bundled id ("ringtone_nexa", …) or "custom". */
     var ringtoneId: String

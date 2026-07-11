@@ -63,7 +63,7 @@ fun CallOverlay(vm: CallViewModel = hiltViewModel()) {
                 Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Avatar(name = state.peerName ?: "Contact", size = 130.dp)
+                Avatar(name = state.peerName ?: "Contact", size = 130.dp, userId = state.peerId?.takeIf { it.isNotEmpty() })
                 Text(state.peerName ?: "Nexa contact", color = Color.White, style = MaterialTheme.typography.headlineMedium)
                 Text(statusLabel(state.status, isVideo, elapsed), color = Color.White.copy(alpha = 0.75f))
             }

@@ -20,7 +20,8 @@ export function toUserPublic(u: UserRow): UserPublic {
     id: u.id,
     username: u.username,
     displayName: u.displayName,
-    avatarUrl: null, // resolved on demand via /media/:id/download-url
+    avatarUrl: null, // legacy field; clients fetch GET /users/:id/avatar
+    avatarObjectId: u.avatarObjectId ?? null,
     bio: u.bio,
     statusKind: (u.statusKind as StatusKind) ?? "available",
     statusMessage: u.statusMessage ?? null,

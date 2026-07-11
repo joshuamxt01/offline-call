@@ -18,7 +18,7 @@ export default function UserDashboard() {
   return (
     <div className="mx-auto h-full max-w-4xl overflow-y-auto scroll-thin p-5">
       <div className="mb-6 flex items-center gap-4">
-        <Avatar name={user?.displayName ?? user?.username} size={56} />
+        <Avatar name={user?.displayName ?? user?.username} size={56} userId={user?.id} avatarVersion={user?.avatarObjectId} />
         <div>
           <h1 className="text-2xl font-bold">Welcome, {user?.displayName ?? user?.username}</h1>
           <p className="text-sm text-muted-foreground">Your Nexa activity at a glance.</p>

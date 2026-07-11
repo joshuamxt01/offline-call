@@ -50,7 +50,7 @@ fun ChatListScreen(
                             .padding(horizontal = 16.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Avatar(name = c.peerName, size = 50.dp)
+                        Avatar(name = c.peerName, size = 50.dp, userId = c.peerId.takeIf { it.isNotEmpty() })
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
                             Text(c.peerName, fontWeight = FontWeight.Medium)

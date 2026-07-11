@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.nexa.data.local.SecureStore
 import app.nexa.data.protocol.DeviceDto
+import app.nexa.data.protocol.MediaUploadUrlRequest
 import app.nexa.data.protocol.UpdateProfileRequest
 import app.nexa.data.remote.ApiService
 import app.nexa.data.repository.AuthRepository
@@ -12,6 +13,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
 
 @HiltViewModel
@@ -23,11 +26,33 @@ class SettingsViewModel @Inject constructor(
 ) : ViewModel() {
 
     val username: String get() = store.username ?: "you"
+    val userId: String? get() = store.userId
     val deviceId: String? get() = store.deviceId
     val fingerprint: String get() = store.identity().publicKey.take(32)
 
     private val _devices = MutableStateFlow<List<DeviceDto>>(emptyList())
     val devices: StateFlow<List<DeviceDto>> = _devices
+
+    // Current avatar object id — doubles as a cache-buster for the avatar image.
+    private val _avatarVersion = MutableStateFlow<String?>(null)
+    val avatarVersion: StateFlow<String?> = _avatarVersion
+    private val _uploadingAvatar = MutableStateFlow(false)
+    val uploadingAvatar: StateFlow<Boolean> = _uploadingAvatar
+
+    /** Upload a picked image as the profile picture (stored unencrypted so others can view it). */
+    fun uploadAvatar(bytes: ByteArray, mime: String) = viewModelScope.launch {
+        _uploadingAvatar.value = true
+        runCatching {
+            val res = api.mediaUploadUrl(
+                MediaUploadUrlRequest(kind = "avatar", contentType = mime, sizeBytes = bytes.size.toLong()),
+            )
+            api.uploadToPresigned(res.uploadUrl, mime, bytes.toRequestBody(mime.toMediaType()))
+            api.mediaCommit(res.objectId)
+            api.updateProfile(UpdateProfileRequest(avatarObjectId = res.objectId))
+            res.objectId
+        }.onSuccess { _avatarVersion.value = it }
+        _uploadingAvatar.value = false
+    }
 
     private val _privacy = MutableStateFlow("public")
     val privacy: StateFlow<String> = _privacy
@@ -61,7 +86,10 @@ class SettingsViewModel @Inject constructor(
     init {
         refreshDevices()
         viewModelScope.launch {
-            runCatching { api.me().user.privacy }.getOrNull()?.let { _privacy.value = it }
+            runCatching { api.me().user }.getOrNull()?.let { u ->
+                u.privacy?.let { _privacy.value = it }
+                _avatarVersion.value = u.avatarObjectId
+            }
         }
     }
 

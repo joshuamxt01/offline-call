@@ -52,7 +52,7 @@ fun ContactsScreen(
             if (vm.searchResults.isNotEmpty()) {
                 item { SectionHeader("Search results") }
                 items(vm.searchResults) { u ->
-                    ContactRow(name = u.displayName ?: u.username, sub = "@${u.username}") {
+                    ContactRow(name = u.displayName ?: u.username, sub = "@${u.username}", userId = u.id) {
                         IconButton(onClick = { vm.add(u.id) }) { Icon(Icons.Default.PersonAdd, "Add") }
                     }
                 }
@@ -109,7 +109,7 @@ private fun AcceptedRow(
     onOpenChat: (convId: String, peerId: String, name: String) -> Unit,
 ) {
     var menu by remember { mutableStateOf(false) }
-    ContactRow(name = c.displayName, sub = presenceLabel(c), online = c.online) {
+    ContactRow(name = c.displayName, sub = presenceLabel(c), online = c.online, userId = c.userId) {
         IconButton(onClick = { vm.openChat(c, onOpenChat) }) { Icon(Icons.Default.Chat, "Message") }
         IconButton(onClick = { vm.startCall(c, CallType.VOICE) }) { Icon(Icons.Default.Call, "Voice call") }
         IconButton(onClick = { vm.startCall(c, CallType.VIDEO) }) { Icon(Icons.Default.Videocam, "Video call") }
@@ -138,12 +138,12 @@ private fun SectionHeader(text: String) {
 }
 
 @Composable
-private fun ContactRow(name: String, sub: String, online: Boolean? = null, actions: @Composable RowScope.() -> Unit) {
+private fun ContactRow(name: String, sub: String, online: Boolean? = null, userId: String? = null, actions: @Composable RowScope.() -> Unit) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Avatar(name = name, online = online)
+        Avatar(name = name, online = online, userId = userId)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(name, fontWeight = FontWeight.Medium)

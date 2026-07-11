@@ -43,7 +43,7 @@ function ChatThread() {
         <Link href="/chats" className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted md:hidden">
           <ArrowLeft size={20} />
         </Link>
-        <Avatar name={peerName} size={40} />
+        <Avatar name={peerName} size={40} userId={callTarget} />
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold">{peerName}</p>
           <p className="flex items-center gap-1 text-xs text-muted-foreground">

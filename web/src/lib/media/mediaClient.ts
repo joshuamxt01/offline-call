@@ -40,6 +40,21 @@ export async function uploadEncryptedMedia(
   return { v: 1, mediaObjectId: objectId, key: enc.key, nonce: enc.nonce, mimeType: blob.type, durationMs, kind };
 }
 
+/** Upload a profile picture UNENCRYPTED (avatars aren't secret and must be
+ *  viewable by others via the public /users/:id/avatar redirect). Returns objectId. */
+export async function uploadAvatar(file: File): Promise<string> {
+  const contentType = file.type || "image/jpeg";
+  const { objectId, uploadUrl, headers } = await mediaApi.uploadUrl({
+    kind: "avatar",
+    contentType,
+    sizeBytes: file.size,
+  });
+  const res = await fetch(uploadUrl, { method: "PUT", headers, body: file });
+  if (!res.ok) throw new Error(`avatar upload failed: ${res.status}`);
+  await mediaApi.commit(objectId);
+  return objectId;
+}
+
 // Cache decrypted object URLs so we don't re-download on every render.
 const urlCache = new Map<string, string>();
 

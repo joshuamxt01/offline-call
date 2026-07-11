@@ -35,7 +35,7 @@ export default function ChatsPage() {
                     href={`/chats/${c.id}?peer=${peer?.id ?? ""}&name=${encodeURIComponent(name)}`}
                     className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/60"
                   >
-                    <Avatar name={name} size={50} />
+                    <Avatar name={name} size={50} userId={peer?.id} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline justify-between gap-2">
                         <p className="truncate font-medium">{name}</p>

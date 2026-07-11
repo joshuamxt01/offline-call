@@ -10,6 +10,7 @@ data class UserDto(
     val username: String,
     val displayName: String? = null,
     val avatarUrl: String? = null,
+    val avatarObjectId: String? = null,
     val bio: String? = null,
     val email: String? = null,
     val role: String? = null,
@@ -159,6 +160,7 @@ data class UpdateProfileRequest(
     val privacy: String? = null,
     val statusKind: String? = null,
     val statusMessage: String? = null,
+    val avatarObjectId: String? = null,
 )
 
 @Serializable

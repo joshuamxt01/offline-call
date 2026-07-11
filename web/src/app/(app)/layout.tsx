@@ -83,7 +83,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         {isAdmin && <ModeSwitch className="mx-3 mb-1" />}
         <div className="flex items-center gap-3 border-t border-border p-3">
-          <Avatar name={user?.displayName ?? user?.username} size={40} online={connected} />
+          <Avatar name={user?.displayName ?? user?.username} size={40} online={connected} userId={user?.id} avatarVersion={user?.avatarObjectId} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">{user?.displayName ?? user?.username}</p>
             <p className="truncate text-xs text-muted-foreground">@{user?.username}</p>

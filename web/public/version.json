@@ -1,5 +1,5 @@
 {
-  "versionCode": 11,
-  "versionName": "0.2.9",
-  "notes": "Voice notes now show a waveform you can tap to scrub/seek while playing. Tap Update to install."
+  "versionCode": 12,
+  "versionName": "0.3.0",
+  "notes": "Profile pictures! Set yours in Settings → Change photo. Your picture now shows in chats, contacts, and incoming calls. Tap Update to install."
 }
