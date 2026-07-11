@@ -89,12 +89,13 @@ class CallManager @Inject constructor(
             socket.callReject(event.callId, "busy")
             return
         }
+        val callerName = event.callerName?.takeIf { it.isNotBlank() } ?: "Incoming call"
         _state.value = CallUiState(
-            active = true, callId = event.callId, peerId = event.callerId, peerName = null,
+            active = true, callId = event.callId, peerId = event.callerId, peerName = callerName,
             type = CallType.fromWire(event.type), direction = CallDirection.INCOMING, status = CallStatus.INCOMING,
         )
         // Full-screen alert so the phone rings even if the app is backgrounded/locked.
-        CallForegroundService.showIncoming(appContext, "Incoming call")
+        CallForegroundService.showIncoming(appContext, callerName)
         ringtone.startRinging() // play the user's selected ringtone + vibrate
     }
 

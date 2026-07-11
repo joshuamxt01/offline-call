@@ -95,7 +95,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!socket) return;
 
-    const onIncoming = (p: { callId: string; callerId: string; type: CallType }) => {
+    const onIncoming = (p: { callId: string; callerId: string; type: CallType; callerName?: string | null }) => {
       // Ignore if already in a call.
       if (store.getState().active) {
         socket.emit(ClientEvents.CallReject, { callId: p.callId, reason: "busy" });
@@ -105,7 +105,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
         active: true,
         callId: p.callId,
         peerId: p.callerId,
-        peerName: null,
+        peerName: p.callerName || null,
         type: p.type,
         direction: "incoming",
         status: "incoming",

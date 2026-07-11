@@ -16,7 +16,7 @@ data class TypingEvent(val conversationId: String, val userId: String, val activ
 data class PresenceEvent(val userId: String, val online: Boolean, val lastSeen: String?)
 
 sealed interface CallEvent {
-    data class Incoming(val callId: String, val callerId: String, val type: String) : CallEvent
+    data class Incoming(val callId: String, val callerId: String, val type: String, val callerName: String? = null) : CallEvent
     data class Answered(val callId: String) : CallEvent
     data class Rejected(val callId: String) : CallEvent
     data class Cancelled(val callId: String, val reason: String?) : CallEvent

@@ -8,6 +8,9 @@ import {
   rtSignalSchema,
   type Ack,
 } from "@nexa/shared";
+import { eq } from "drizzle-orm";
+import { db } from "../config/db.js";
+import { users } from "../db/schema.js";
 import * as callsService from "../modules/calls/calls.service.js";
 import * as callState from "./callState.js";
 import { canCall } from "../modules/contacts/contacts.service.js";
@@ -43,7 +46,18 @@ export function registerSignaling(nsp: Namespace, socket: Socket): void {
       await callsService.createCall({ callId, callerId: userId, calleeId, type });
       await callState.createCallState(callId, { caller: userId, callee: calleeId, type });
 
-      nsp.to(userRoom(calleeId)).emit(ServerEvents.CallIncoming, { callId, callerId: userId, type });
+      // Include the caller's display name (+ avatar) so the callee sees WHO is
+      // calling instead of a generic "Incoming call".
+      const [caller] = await db
+        .select({ displayName: users.displayName, username: users.username, avatarObjectId: users.avatarObjectId })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+      const callerName = caller?.displayName || caller?.username || "Unknown";
+
+      nsp
+        .to(userRoom(calleeId))
+        .emit(ServerEvents.CallIncoming, { callId, callerId: userId, type, callerName, callerAvatar: caller?.avatarObjectId ?? null });
 
       // Ring timeout → mark missed if still ringing.
       const timer = setTimeout(async () => {

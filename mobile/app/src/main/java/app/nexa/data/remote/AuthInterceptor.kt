@@ -12,7 +12,14 @@ class AuthInterceptor @Inject constructor(
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val path = request.url.encodedPath
-        val skip = path.endsWith("/auth/login") ||
+        // NEVER attach our bearer token to S3/B2 presigned upload/download URLs:
+        // they authenticate via query-string signature, and an extra Authorization
+        // header makes the storage reject the request (403) — which used to crash
+        // the app when sending a voice/video/photo.
+        val isPresigned = request.url.host.contains("backblazeb2") ||
+            request.url.queryParameterNames.any { it.startsWith("X-Amz-") }
+        val skip = isPresigned ||
+            path.endsWith("/auth/login") ||
             path.endsWith("/auth/register") ||
             path.endsWith("/auth/refresh")
         val token = store.accessToken

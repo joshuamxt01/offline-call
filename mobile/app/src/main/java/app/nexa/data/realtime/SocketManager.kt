@@ -97,7 +97,7 @@ class SocketManager @Inject constructor(
         }
 
         s.on(RtEvents.CALL_INCOMING) { a ->
-            obj(a)?.let { o -> callEvents.tryEmit(CallEvent.Incoming(o.getString("callId"), o.getString("callerId"), o.getString("type"))) }
+            obj(a)?.let { o -> callEvents.tryEmit(CallEvent.Incoming(o.getString("callId"), o.getString("callerId"), o.getString("type"), o.strOrNull("callerName"))) }
         }
         s.on(RtEvents.CALL_ANSWERED) { a -> obj(a)?.let { o -> callEvents.tryEmit(CallEvent.Answered(o.getString("callId"))) } }
         s.on(RtEvents.CALL_REJECTED) { a -> obj(a)?.let { o -> callEvents.tryEmit(CallEvent.Rejected(o.getString("callId"))) } }

@@ -4,6 +4,7 @@ import android.Manifest
 import android.media.MediaMetadataRetriever
 import android.media.MediaPlayer
 import android.widget.MediaController
+import android.widget.Toast
 import android.widget.VideoView
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -56,6 +57,14 @@ fun ChatScreen(
     val typing by vm.peerTyping.collectAsStateWithLifecycle()
     val recording by vm.recording.collectAsStateWithLifecycle()
     val recordElapsed by vm.recordElapsed.collectAsStateWithLifecycle()
+    val sendFailed by vm.sendFailed.collectAsStateWithLifecycle()
+    val ctx = LocalContext.current
+    LaunchedEffect(sendFailed) {
+        if (sendFailed) {
+            Toast.makeText(ctx, "Couldn't send. Check your connection and try again.", Toast.LENGTH_LONG).show()
+            vm.clearSendFailed()
+        }
+    }
     var input by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
 

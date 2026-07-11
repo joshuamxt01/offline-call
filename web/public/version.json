@@ -1,5 +1,5 @@
 {
-  "versionCode": 8,
-  "versionName": "0.2.6",
-  "notes": "Fixes 'Unable to decrypt' messages. The app now always uses each person's current encryption key, so messages send and read correctly even after someone reinstalls. Update BOTH devices, then send a new message (older undecryptable messages can't be recovered)."
+  "versionCode": 9,
+  "versionName": "0.2.7",
+  "notes": "Fixes the crash when sending a voice note, video, or photo (they now upload and send correctly). Incoming calls now show the caller's name instead of a generic label. Smaller, faster Windows download. Tap Update to install."
 }

@@ -83,12 +83,21 @@ class ChatViewModel @Inject constructor(
         recordJob?.cancel()
     }
 
+    /** Emitted (true) when a media send fails, so the screen can show a message
+     *  instead of the app crashing on an uncaught exception. */
+    val sendFailed = MutableStateFlow(false)
+    fun clearSendFailed() { sendFailed.value = false }
+
+    private fun launchSend(block: suspend () -> Unit) = viewModelScope.launch {
+        runCatching { block() }.onFailure { sendFailed.value = true }
+    }
+
     fun stopAndSendVoice() {
         val rec = audioRecorder.stop()
         recording.value = false
         recordJob?.cancel()
         if (rec != null && rec.durationMs > 400 && peerId.isNotEmpty()) {
-            viewModelScope.launch {
+            launchSend {
                 chat.sendMedia(conversationId, peerId, "voice", rec.file.readBytes(), "audio/mp4", rec.durationMs, rec.file)
             }
         }
@@ -97,7 +106,7 @@ class ChatViewModel @Inject constructor(
     // ---- Video notes ----
     fun sendVideo(bytes: ByteArray, durationMs: Long, file: File?) {
         if (peerId.isEmpty()) return
-        viewModelScope.launch {
+        launchSend {
             chat.sendMedia(conversationId, peerId, "video", bytes, "video/mp4", durationMs, file)
         }
     }
@@ -105,7 +114,7 @@ class ChatViewModel @Inject constructor(
     // ---- Photos ----
     fun sendImage(bytes: ByteArray, mimeType: String, file: File?) {
         if (peerId.isEmpty()) return
-        viewModelScope.launch {
+        launchSend {
             chat.sendMedia(conversationId, peerId, "image", bytes, mimeType, 0, file)
         }
     }
