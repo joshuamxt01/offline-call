@@ -170,6 +170,6 @@ class UpdateManager @Inject constructor(
         //   - version manifest served by the website
         //   - APK served by GitHub Releases (always the newest release)
         const val VERSION_URL = "https://offline-call.vercel.app/version.json"
-        const val APK_URL = "https://github.com/Mrcontech/offline-call/releases/latest/download/nexa.apk"
+        const val APK_URL = "https://github.com/joshuamxt01/offline-call/releases/latest/download/nexa.apk"
     }
 }

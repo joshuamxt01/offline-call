@@ -1,5 +1,5 @@
 {
-  "versionCode": 14,
-  "versionName": "0.3.2",
-  "notes": "Profile pictures are public by default so everyone can see them (make sure both phones are updated). New Settings option: 'Only contacts can see my photo'. Tap Update to install."
+  "versionCode": 15,
+  "versionName": "0.3.3",
+  "notes": "Calls now connect on mobile data (added a relay server), and the app moved to the new server. Tap Update to install."
 }

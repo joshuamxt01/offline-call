@@ -22,7 +22,7 @@ REM --- Where your phone should reach the backend ---
 REM Default baked into the app = the PERMANENT Render backend, so a fresh install
 REM works over any network with no setup. Users can still change it in-app under
 REM "Server settings" (e.g. a LAN IP like http://192.168.x.x:4000 for offline mode).
-set "API_BASE_URL=https://offline-call.onrender.com"
+set "API_BASE_URL=https://offline-call-hy4x.onrender.com"
 
 if not exist "%JAVA_HOME%\bin\java.exe" (
   echo [ERROR] Toolchain missing. Run setup.bat first.

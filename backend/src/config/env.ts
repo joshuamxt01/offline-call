@@ -38,6 +38,10 @@ const envSchema = z.object({
     .default("stun:localhost:3478")
     .transform((v) => v.split(",").map((s) => s.trim()).filter(Boolean)),
   TURN_TTL: num(86_400),
+  // Static TURN credentials (for a hosted relay like Open Relay / Metered). When
+  // set, they're returned as-is instead of generating coturn HMAC credentials.
+  TURN_USERNAME: z.string().optional(),
+  TURN_CREDENTIAL: z.string().optional(),
 
   S3_ENDPOINT: z.string().default("http://localhost:9000"),
   S3_REGION: z.string().default("us-east-1"),

@@ -75,7 +75,7 @@ export default function LandingPage() {
 
             <div className="mt-4 flex flex-wrap gap-3">
               <a
-                href="https://github.com/Mrcontech/offline-call/releases/latest/download/nexa.apk"
+                href="https://github.com/joshuamxt01/offline-call/releases/latest/download/nexa.apk"
                 className="inline-flex"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -85,7 +85,7 @@ export default function LandingPage() {
                 </Button>
               </a>
               <a
-                href="https://github.com/Mrcontech/offline-call/releases/latest/download/nexa-windows.exe"
+                href="https://github.com/joshuamxt01/offline-call/releases/latest/download/nexa-windows.exe"
                 className="inline-flex"
                 target="_blank"
                 rel="noopener noreferrer"
