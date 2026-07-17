@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -108,19 +109,29 @@ private fun CallButton(icon: ImageVector, bg: Color, label: String, onClick: () 
 
 @Composable
 private fun VideoRenderer(track: VideoTrack, eglContext: EglBase.Context, mirror: Boolean, modifier: Modifier) {
-    AndroidView(
-        modifier = modifier,
-        factory = { ctx ->
-            SurfaceViewRenderer(ctx).apply {
+    val context = LocalContext.current
+    // Create + init the renderer exactly once (NOT on every recomposition).
+    val renderer = remember {
+        SurfaceViewRenderer(context).apply {
+            runCatching {
                 init(eglContext, null)
                 setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FILL)
                 setMirror(mirror)
                 setEnableHardwareScaler(true)
             }
-        },
-        update = { view -> track.addSink(view) },
-        onRelease = { view -> track.removeSink(view); view.release() },
-    )
+        }
+    }
+    // Release the renderer last, when this composable leaves for good.
+    DisposableEffect(Unit) {
+        onDispose { runCatching { renderer.release() } }
+    }
+    // Attach the sink ONCE per track, and always detach before releasing —
+    // avoids leaking native sinks that deliver frames to a freed renderer (SIGSEGV).
+    DisposableEffect(track) {
+        runCatching { track.addSink(renderer) }
+        onDispose { runCatching { track.removeSink(renderer) } }
+    }
+    AndroidView(factory = { renderer }, modifier = modifier)
 }
 
 private fun statusLabel(status: CallStatus, isVideo: Boolean, elapsed: Int): String = when (status) {

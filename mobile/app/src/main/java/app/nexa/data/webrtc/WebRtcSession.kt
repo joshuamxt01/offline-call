@@ -48,9 +48,12 @@ class WebRtcSession(
     /** Set up local media + PeerConnection and start listening for signals.
      *  The caller additionally calls [makeOffer] once the callee has answered. */
     fun start(turn: TurnCredentials?, onFailed: () -> Unit) {
-        createLocalMedia()
-        createPeer(turn, onFailed)
-        observeSignals()
+        // Never let media/peer setup crash the app — end the call gracefully instead.
+        runCatching {
+            createLocalMedia()
+            createPeer(turn, onFailed)
+            observeSignals()
+        }.onFailure { onFailed() }
     }
 
     /** Caller-side: create and send the SDP offer (after CALL_ANSWERED). */
@@ -62,17 +65,20 @@ class WebRtcSession(
         audioTrack = factory.createAudioTrack("audio0", audioSource)
 
         if (isVideo) {
-            val enumerator = Camera2Enumerator(appContext)
-            val capturer = createCameraCapturer(enumerator, front = true) ?: return
-            videoCapturer = capturer
-            val source = factory.createVideoSource(false)
-            videoSource = source
-            surfaceHelper = SurfaceTextureHelper.create("CaptureThread", eglBase.eglBaseContext)
-            capturer.initialize(surfaceHelper, appContext, source.capturerObserver)
-            capturer.startCapture(1280, 720, 30)
-            val track = factory.createVideoTrack("video0", source)
-            videoTrack = track
-            localVideoTrack.value = track
+            // If the camera can't be opened, keep the call as audio-only rather than crash.
+            runCatching {
+                val enumerator = Camera2Enumerator(appContext)
+                val capturer = createCameraCapturer(enumerator, front = true) ?: return@runCatching
+                videoCapturer = capturer
+                val source = factory.createVideoSource(false)
+                videoSource = source
+                surfaceHelper = SurfaceTextureHelper.create("CaptureThread", eglBase.eglBaseContext)
+                capturer.initialize(surfaceHelper, appContext, source.capturerObserver)
+                capturer.startCapture(1280, 720, 30)
+                val track = factory.createVideoTrack("video0", source)
+                videoTrack = track
+                localVideoTrack.value = track
+            }
         }
     }
 
