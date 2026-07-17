@@ -5,6 +5,8 @@ import app.nexa.data.protocol.TurnCredentials
 import app.nexa.data.realtime.SignalEvent
 import app.nexa.data.signaling.SignalingChannel
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -41,6 +43,7 @@ class WebRtcSession(
     private var usingFront = true
     private val pendingIce = CopyOnWriteArrayList<IceCandidate>()
     private var remoteSet = false
+    private var disconnectJob: Job? = null
 
     /** Set up local media + PeerConnection and start listening for signals.
      *  The caller additionally calls [makeOffer] once the callee has answered. */
@@ -102,9 +105,22 @@ class WebRtcSession(
 
             override fun onConnectionChange(newState: PeerConnection.PeerConnectionState) {
                 when (newState) {
-                    PeerConnection.PeerConnectionState.CONNECTED -> connected.value = true
+                    PeerConnection.PeerConnectionState.CONNECTED -> {
+                        disconnectJob?.cancel() // recovered — cancel any pending hang-up
+                        connected.value = true
+                    }
+                    // FAILED is terminal (ICE gave up) → end now.
                     PeerConnection.PeerConnectionState.FAILED,
-                    PeerConnection.PeerConnectionState.DISCONNECTED -> onFailed()
+                    PeerConnection.PeerConnectionState.CLOSED -> onFailed()
+                    // DISCONNECTED is TRANSIENT — WebRTC usually recovers. Don't drop the
+                    // call immediately; only end if it stays down past a grace period.
+                    PeerConnection.PeerConnectionState.DISCONNECTED -> {
+                        disconnectJob?.cancel()
+                        disconnectJob = scope.launch {
+                            delay(15_000)
+                            onFailed()
+                        }
+                    }
                     else -> {}
                 }
             }
@@ -211,6 +227,7 @@ class WebRtcSession(
     }
 
     fun dispose() {
+        disconnectJob?.cancel()
         try { videoCapturer?.stopCapture() } catch (_: Exception) {}
         videoCapturer?.dispose()
         videoSource?.dispose()

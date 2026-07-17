@@ -1,5 +1,5 @@
 {
-  "versionCode": 15,
-  "versionName": "0.3.3",
-  "notes": "Calls now connect on mobile data (added a relay server), and the app moved to the new server. Tap Update to install."
+  "versionCode": 16,
+  "versionName": "0.3.4",
+  "notes": "Fixes calls dropping/ending on their own — the app no longer hangs up on a brief network blip during a call. Tap Update to install."
 }
