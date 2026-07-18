@@ -76,7 +76,9 @@ class MainActivity : ComponentActivity() {
     /** "Answer" tapped on the incoming-call notification -> accept the call. */
     private fun handleCallAction(intent: Intent?) {
         if (intent?.action == CallForegroundService.ACTION_ANSWER) {
-            callManager.accept()
+            // Answering runs during onCreate/onNewIntent (often from the lock screen).
+            // Never let anything here take down the activity as it's coming up.
+            runCatching { callManager.accept() }
         }
     }
 

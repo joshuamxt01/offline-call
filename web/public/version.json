@@ -1,5 +1,5 @@
 {
-  "versionCode": 18,
-  "versionName": "0.3.6",
-  "notes": "Fixes the real cause of the app closing when a call is answered (an Android 14 microphone/camera service crash). Calls now connect and stay stable. Tap Update to install."
+  "versionCode": 19,
+  "versionName": "0.3.7",
+  "notes": "Fixes the app closing when you answer a call from the lock screen. This is the actual cause — calls now stay open and connect. Tap Update to install."
 }

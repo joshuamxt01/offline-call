@@ -115,12 +115,19 @@ class CallForegroundService : Service() {
             val intent = Intent(context, CallForegroundService::class.java)
                 .putExtra(EXTRA_PEER, peerName)
                 .putExtra(EXTRA_VIDEO, video)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.startForegroundService(intent)
-            else context.startService(intent)
+            // CRITICAL: answering from the lock screen / background makes
+            // startForegroundService() itself throw ForegroundServiceStartNotAllowedException
+            // (Android 12+) — on the MAIN thread, at THIS call site, before the service ever
+            // runs. Unguarded, that crashes the whole app the instant a call is answered. The
+            // call still works without the service while the UI is in the foreground, so swallow it.
+            runCatching {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.startForegroundService(intent)
+                else context.startService(intent)
+            }
         }
 
         fun stop(context: Context) {
-            context.startService(Intent(context, CallForegroundService::class.java).setAction(ACTION_STOP))
+            runCatching { context.startService(Intent(context, CallForegroundService::class.java).setAction(ACTION_STOP)) }
         }
 
         /**
