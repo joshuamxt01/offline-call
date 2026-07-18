@@ -1,16 +1,19 @@
 package app.nexa.service
 
+import android.Manifest
 import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.Person
+import androidx.core.content.ContextCompat
 import app.nexa.MainActivity
 import app.nexa.R
 
@@ -29,11 +32,12 @@ class CallForegroundService : Service() {
             return START_NOT_STICKY
         }
         val peer = intent?.getStringExtra(EXTRA_PEER) ?: "Nexa call"
-        startForegroundWithNotification(peer)
+        val video = intent?.getBooleanExtra(EXTRA_VIDEO, false) ?: false
+        startForegroundWithNotification(peer, video)
         return START_STICKY
     }
 
-    private fun startForegroundWithNotification(peer: String) {
+    private fun startForegroundWithNotification(peer: String, video: Boolean) {
         val contentIntent = android.app.PendingIntent.getActivity(
             this, 0, Intent(this, MainActivity::class.java),
             android.app.PendingIntent.FLAG_IMMUTABLE,
@@ -46,14 +50,46 @@ class CallForegroundService : Service() {
             .setContentIntent(contentIntent)
             .build()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(
-                NOTIFICATION_ID,
-                notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE or ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA,
-            )
-        } else {
-            startForeground(NOTIFICATION_ID, notification)
+        startForegroundSafely(notification, video)
+    }
+
+    /**
+     * Start the foreground service WITHOUT ever crashing the app.
+     *
+     * On Android 14 (targetSdk 34) startForeground() with the microphone/camera
+     * type throws if the matching runtime permission isn't granted, and starting
+     * such a "while-in-use" service from the background (e.g. answering from the
+     * lock screen) throws ForegroundServiceStartNotAllowedException. A throw here
+     * runs on the service's main thread and kills the whole process the instant a
+     * call is answered. So: request only the types we actually hold permission
+     * for, and fall back to dataSync (no while-in-use restriction) then to a plain
+     * FGS, catching everything.
+     */
+    private fun startForegroundSafely(notification: Notification, video: Boolean) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            runCatching { startForeground(NOTIFICATION_ID, notification) }
+            return
+        }
+        val hasMic = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
+            PackageManager.PERMISSION_GRANTED
+        val hasCam = video && ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) ==
+            PackageManager.PERMISSION_GRANTED
+
+        var micCamType = 0
+        if (hasMic) micCamType = micCamType or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+        if (hasCam) micCamType = micCamType or ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
+
+        // Try the precise mic/camera type first, then dataSync, then a bare FGS.
+        val attempts = buildList {
+            if (micCamType != 0) add(micCamType)
+            add(ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+        }
+        for (type in attempts) {
+            if (runCatching { startForeground(NOTIFICATION_ID, notification, type) }.isSuccess) return
+        }
+        // Last resort: satisfy the startForegroundService() contract however we can.
+        if (runCatching { startForeground(NOTIFICATION_ID, notification) }.isFailure) {
+            runCatching { stopSelf() }
         }
     }
 
@@ -73,9 +109,12 @@ class CallForegroundService : Service() {
         const val ACTION_STOP = "app.nexa.CALL_STOP"
         const val ACTION_ANSWER = "app.nexa.CALL_ANSWER" // handled by MainActivity
         const val EXTRA_PEER = "peer"
+        const val EXTRA_VIDEO = "video"
 
-        fun start(context: Context, peerName: String) {
-            val intent = Intent(context, CallForegroundService::class.java).putExtra(EXTRA_PEER, peerName)
+        fun start(context: Context, peerName: String, video: Boolean = false) {
+            val intent = Intent(context, CallForegroundService::class.java)
+                .putExtra(EXTRA_PEER, peerName)
+                .putExtra(EXTRA_VIDEO, video)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.startForegroundService(intent)
             else context.startService(intent)
         }

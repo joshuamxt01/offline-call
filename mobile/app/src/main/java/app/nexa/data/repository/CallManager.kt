@@ -74,7 +74,7 @@ class CallManager @Inject constructor(
             active = true, callId = callId, peerId = peerId, peerName = peerName, type = type,
             direction = CallDirection.OUTGOING, status = CallStatus.RINGING,
         )
-        CallForegroundService.start(appContext, peerName)
+        CallForegroundService.start(appContext, peerName, video = type == CallType.VIDEO)
         setupAudio(type)
         scope.launch {
             val turn = fetchTurn()
@@ -105,7 +105,7 @@ class CallManager @Inject constructor(
         ringtone.stop()
         _state.value = s.copy(status = CallStatus.CONNECTING)
         CallForegroundService.cancelIncoming(appContext)
-        CallForegroundService.start(appContext, s.peerName ?: "Call") // ongoing (mic/camera)
+        CallForegroundService.start(appContext, s.peerName ?: "Call", video = s.type == CallType.VIDEO) // ongoing (mic/camera)
         setupAudio(s.type)
         scope.launch {
             val turn = fetchTurn()

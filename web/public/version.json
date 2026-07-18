@@ -1,5 +1,5 @@
 {
-  "versionCode": 17,
-  "versionName": "0.3.5",
-  "notes": "Fixes the app crashing/closing when a call is answered. Video calls now connect and stay stable. Tap Update to install."
+  "versionCode": 18,
+  "versionName": "0.3.6",
+  "notes": "Fixes the real cause of the app closing when a call is answered (an Android 14 microphone/camera service crash). Calls now connect and stay stable. Tap Update to install."
 }

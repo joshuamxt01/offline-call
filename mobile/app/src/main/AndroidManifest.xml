@@ -64,7 +64,7 @@
         <service
             android:name=".service.CallForegroundService"
             android:exported="false"
-            android:foregroundServiceType="microphone|camera" />
+            android:foregroundServiceType="microphone|camera|dataSync" />
 
         <service
             android:name=".service.MessagingService"
