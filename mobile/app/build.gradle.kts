@@ -26,6 +26,23 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Two apps from one project:
+    //   online  -> cloud mode (Socket.IO backend). Ships to users; pushed to GitHub.
+    //   offline -> LAN mode (direct sockets, no server). Installs alongside as a
+    //              separate package (app.nexa.offline).
+    // Shared code lives in src/main; connection code lives in src/online & src/offline.
+    flavorDimensions += "mode"
+    productFlavors {
+        create("online") {
+            dimension = "mode"
+        }
+        create("offline") {
+            dimension = "mode"
+            applicationIdSuffix = ".offline"
+            versionNameSuffix = "-offline"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true

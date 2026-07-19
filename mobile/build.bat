@@ -48,7 +48,7 @@ echo.
 
 REM Run Gradle from inside the project folder (no -p, avoids path-quoting issues).
 pushd "%PROJDIR%"
-call "%GRADLE%" -PAPI_BASE_URL=%API_BASE_URL% assembleDebug --no-daemon --console=plain %*
+call "%GRADLE%" -PAPI_BASE_URL=%API_BASE_URL% assembleOnlineDebug --no-daemon --console=plain %*
 set "RESULT=%errorlevel%"
 popd
 
@@ -59,7 +59,7 @@ if not "%RESULT%"=="0" (
   exit /b 1
 )
 
-set "APK=%ROOT%app\build\outputs\apk\debug\app-debug.apk"
+set "APK=%ROOT%app\build\outputs\apk\online\debug\app-online-debug.apk"
 echo.
 echo ============================================================
 echo  BUILD OK. Your APK:

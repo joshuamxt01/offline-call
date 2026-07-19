@@ -6,7 +6,7 @@ import app.nexa.data.protocol.TurnCredentials
 import app.nexa.data.realtime.CallEvent
 import app.nexa.data.realtime.SocketManager
 import app.nexa.data.remote.ApiService
-import app.nexa.data.signaling.CloudSignaling
+import app.nexa.data.signaling.SignalingChannel
 import app.nexa.data.webrtc.WebRtcSession
 import app.nexa.service.CallForegroundService
 import app.nexa.service.RingtonePlayer
@@ -37,7 +37,7 @@ class CallManager @Inject constructor(
     private val factory: PeerConnectionFactory,
     private val eglBase: EglBase,
     private val socket: SocketManager,
-    private val cloudSignaling: CloudSignaling,
+    private val signaling: SignalingChannel,
     private val api: ApiService,
     private val ringtone: RingtonePlayer,
     private val scope: CoroutineScope,
@@ -169,7 +169,7 @@ class CallManager @Inject constructor(
     }
 
     private fun newSession(callId: String, type: CallType) = WebRtcSession(
-        appContext, factory, eglBase, cloudSignaling, scope, callId, isVideo = type == CallType.VIDEO,
+        appContext, factory, eglBase, signaling, scope, callId, isVideo = type == CallType.VIDEO,
     )
 
     private fun observeConnected() {
