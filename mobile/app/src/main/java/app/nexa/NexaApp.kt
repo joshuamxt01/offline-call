@@ -4,6 +4,9 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import app.nexa.service.AppForeground
 import app.nexa.service.CallForegroundService
 import app.nexa.service.MessagingService
@@ -12,7 +15,9 @@ import coil.ImageLoaderFactory
 import dagger.hilt.android.HiltAndroidApp
 import okhttp3.OkHttpClient
 import java.io.File
+import java.io.FileWriter
 import java.io.PrintWriter
+import java.util.Date
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -27,27 +32,63 @@ class NexaApp : Application(), ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
         installCrashLogger()
+        installMainThreadGuard()
         registerActivityLifecycleCallbacks(AppForeground)
         createNotificationChannels()
     }
 
     /**
-     * Last-resort safety net: if any thread dies with an uncaught exception, write
-     * the full stack trace to <app files>/last-crash.txt before the process exits,
-     * then let the system handle it normally. Lets us recover the exact cause of a
-     * field crash even without a USB/logcat connection.
+     * Global safety net for BACKGROUND threads: log any uncaught exception, then
+     * keep the process alive instead of letting the system kill it. (Main-thread
+     * exceptions are handled by [installMainThreadGuard] and never reach here.)
      */
     private fun installCrashLogger() {
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            runCatching {
-                val dir = getExternalFilesDir(null) ?: filesDir
-                PrintWriter(File(dir, "last-crash.txt")).use { w ->
-                    w.println("thread: ${thread.name}")
-                    throwable.printStackTrace(w)
+            logThrowable(thread.name, throwable)
+            if (thread === Looper.getMainLooper().thread) {
+                // Shouldn't happen (the loop guard catches main-thread throws first),
+                // but if it ever does, defer to the system so we don't hang.
+                previous?.uncaughtException(thread, throwable)
+            }
+            // Otherwise: swallow. Only the offending worker thread ends; the app lives.
+        }
+    }
+
+    /**
+     * The big one: wrap the main-thread message loop so that an uncaught exception
+     * in ANY framework callback dispatched on the main thread — Activity/Service/
+     * BroadcastReceiver lifecycle, a foreground-service startForeground(), a Compose
+     * frame — is caught and logged instead of taking the whole app down. This is what
+     * turns "the app vanished" into "that one action failed but the app kept running".
+     */
+    private fun installMainThreadGuard() {
+        Handler(Looper.getMainLooper()).post {
+            while (true) {
+                try {
+                    Looper.loop()
+                } catch (t: Throwable) {
+                    // A message handler threw. Log it and resume the loop so the app
+                    // survives. Looper.loop() only exits by throwing, so re-entering it
+                    // simply continues dispatching the next message.
+                    logThrowable("main-loop", t)
                 }
             }
-            previous?.uncaughtException(thread, throwable)
+        }
+    }
+
+    /**
+     * Append a timestamped stack trace to <app files>/last-crash.txt so we can
+     * recover the exact cause of a field failure even without USB/logcat.
+     */
+    private fun logThrowable(tag: String, throwable: Throwable) {
+        Log.e("NexaCrash", "[$tag] uncaught", throwable)
+        runCatching {
+            val dir = getExternalFilesDir(null) ?: filesDir
+            PrintWriter(FileWriter(File(dir, "last-crash.txt"), /* append = */ true)).use { w ->
+                w.println("---- ${Date()} [$tag] ----")
+                throwable.printStackTrace(w)
+            }
         }
     }
 

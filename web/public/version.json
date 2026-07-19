@@ -1,5 +1,5 @@
 {
-  "versionCode": 20,
-  "versionName": "0.3.8",
-  "notes": "Fixes the app crashing when a call is answered (the background push service could crash on Android 12+). Confirmed from the crash log. Tap Update to install."
+  "versionCode": 21,
+  "versionName": "0.3.9",
+  "notes": "Adds an app-wide crash guard so a single failed action can no longer close the whole app, plus extra protection around calls and notifications. Tap Update to install."
 }

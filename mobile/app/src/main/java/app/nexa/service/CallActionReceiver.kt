@@ -27,10 +27,12 @@ class CallActionReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != ACTION_DECLINE) return
-        val entryPoint = EntryPointAccessors.fromApplication(
-            context.applicationContext, CallManagerEntryPoint::class.java,
-        )
-        entryPoint.callManager().reject()
+        runCatching {
+            val entryPoint = EntryPointAccessors.fromApplication(
+                context.applicationContext, CallManagerEntryPoint::class.java,
+            )
+            entryPoint.callManager().reject()
+        }
     }
 
     companion object {
