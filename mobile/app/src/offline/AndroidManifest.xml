@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <!-- The offline app launches straight into LAN discovery — no login. -->
+        <activity
+            android:name="app.nexa.offline.OfflineMainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.Nexa">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- The cloud app's entry screen is not the launcher in the offline build. -->
+        <activity android:name="app.nexa.MainActivity" tools:node="remove" />
+    </application>
+</manifest>
