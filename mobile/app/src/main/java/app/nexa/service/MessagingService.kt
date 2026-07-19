@@ -40,7 +40,17 @@ class MessagingService : android.app.Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startForeground(ONGOING_ID, ongoingNotification())
+        // startForeground() throws ForegroundServiceStartNotAllowedException (Android 12+)
+        // when the system restarts this service in the BACKGROUND — a START_STICKY
+        // redelivery with a null intent, e.g. while the phone is locked during an incoming
+        // call. That uncaught throw was crashing the whole app on the device that answers.
+        // If we can't go foreground right now, bail out quietly; MainActivity starts us
+        // again (from the foreground, where it's allowed) the next time the app is opened.
+        val started = runCatching { startForeground(ONGOING_ID, ongoingNotification()) }.isSuccess
+        if (!started) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
         runCatching { socket.connect() }
         if (!collecting) {
             collecting = true
