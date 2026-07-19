@@ -120,6 +120,9 @@ data class TurnCredentials(
     val ttl: Int,
 )
 
+@Serializable
+data class DiagBody(val text: String)
+
 // ---- Request bodies ----
 @Serializable
 data class RegisterRequest(

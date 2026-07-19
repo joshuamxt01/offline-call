@@ -2,6 +2,7 @@ package app.nexa.data.repository
 
 import android.content.Context
 import android.media.AudioManager
+import app.nexa.data.protocol.DiagBody
 import app.nexa.data.protocol.TurnCredentials
 import app.nexa.data.realtime.CallEvent
 import app.nexa.data.realtime.SocketManager
@@ -185,8 +186,10 @@ class CallManager @Inject constructor(
 
     private fun endLocal(status: CallStatus) {
         ringtone.stop()
-        session?.dispose()
+        val s = _state.value
+        val sess = session
         session = null
+        sess?.let { reportDiag(s, status, it.diagText()); it.dispose() }
         CallForegroundService.cancelIncoming(appContext)
         CallForegroundService.stop(appContext)
         resetAudio()
@@ -197,6 +200,13 @@ class CallManager @Inject constructor(
             kotlinx.coroutines.delay(1200)
             _state.value = CallUiState()
         }
+    }
+
+    /** Send this call's negotiation log to the server so we can see how it went. */
+    private fun reportDiag(state: CallUiState, status: CallStatus, log: String) {
+        if (log.isBlank()) return
+        val header = "call=${state.callId?.take(8)} dir=${state.direction} type=${state.type} end=$status peer=${state.peerName}"
+        scope.launch { runCatching { api.postDiag(DiagBody("$header\n$log")) } }
     }
 
     // Never block call setup on the server. Same-network calls connect directly

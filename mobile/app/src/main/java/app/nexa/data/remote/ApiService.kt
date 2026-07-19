@@ -115,4 +115,8 @@ interface ApiService {
 
     @GET("turn/credentials")
     suspend fun turnCredentials(): TurnCredentials
+
+    // ---- Diagnostics (temporary: app reports how a call negotiated) ----
+    @POST("diag")
+    suspend fun postDiag(@Body body: DiagBody)
 }

@@ -45,6 +45,10 @@ class WebRtcSession(
     private var remoteSet = false
     private var disconnectJob: Job? = null
 
+    private val diagLines = java.util.Collections.synchronizedList(mutableListOf<String>())
+    /** The negotiation log for this call (for field diagnostics). */
+    fun diagText(): String = synchronized(diagLines) { diagLines.joinToString("\n") }
+
     /** Set up local media + PeerConnection and start listening for signals.
      *  The caller additionally calls [makeOffer] once the callee has answered. */
     fun start(turn: TurnCredentials?, onFailed: () -> Unit) {
@@ -262,6 +266,7 @@ class WebRtcSession(
      */
     private fun diag(msg: String) {
         android.util.Log.i("NexaCall", "[$callId] $msg")
+        diagLines.add(msg)
         runCatching {
             val dir = appContext.getExternalFilesDir(null) ?: appContext.filesDir
             java.io.FileWriter(java.io.File(dir, "call-log.txt"), true).use {

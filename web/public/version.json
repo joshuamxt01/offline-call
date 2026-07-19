@@ -1,5 +1,5 @@
 {
-  "versionCode": 22,
-  "versionName": "0.4.0",
-  "notes": "Calls fixed: the app no longer waits on the server to connect, so calls link up directly on your network. Tap Update to install."
+  "versionCode": 23,
+  "versionName": "0.4.1",
+  "notes": "Improves call connection and reporting. Please update, then make one test call. Tap Update to install."
 }

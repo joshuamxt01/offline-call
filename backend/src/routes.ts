@@ -13,6 +13,7 @@ import { networksRouter } from "./modules/networks/networks.routes.js";
 import { notificationsRouter } from "./modules/notifications/notifications.routes.js";
 import { adminRouter } from "./modules/admin/admin.routes.js";
 import { accessRouter } from "./modules/access/access.routes.js";
+import { diagRouter } from "./modules/diag/diag.routes.js";
 import { enforceNetworkLock } from "./middleware/networkLock.js";
 
 /** Mounts every feature module under /api/v1. */
@@ -36,3 +37,4 @@ apiRouter.use("/turn", enforceNetworkLock, turnRouter);
 apiRouter.use("/media", enforceNetworkLock, mediaRouter);
 apiRouter.use("/networks", enforceNetworkLock, networksRouter);
 apiRouter.use("/notifications", enforceNetworkLock, notificationsRouter);
+apiRouter.use("/diag", diagRouter); // temporary call diagnostics
