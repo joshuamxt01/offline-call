@@ -199,5 +199,10 @@ class CallManager @Inject constructor(
         }
     }
 
-    private suspend fun fetchTurn(): TurnCredentials? = runCatching { api.turnCredentials() }.getOrNull()
+    // Never block call setup on the server. Same-network calls connect directly
+    // (STUN/host), so if the credentials call is slow (e.g. a cold free-tier
+    // backend), proceed after a short wait rather than leaving the user on
+    // "connecting". A relay, when enabled, simply arrives with the next call.
+    private suspend fun fetchTurn(): TurnCredentials? =
+        kotlinx.coroutines.withTimeoutOrNull(4000) { runCatching { api.turnCredentials() }.getOrNull() }
 }

@@ -98,6 +98,7 @@ class WebRtcSession(
 
         peer = factory.createPeerConnection(config, object : PeerConnection.Observer {
             override fun onIceCandidate(candidate: IceCandidate) {
+                diag("local candidate: ${candType(candidate.sdp)}")
                 val json = JSONObject()
                     .put("candidate", candidate.sdp)
                     .put("sdpMid", candidate.sdpMid)
@@ -106,10 +107,12 @@ class WebRtcSession(
             }
 
             override fun onTrack(transceiver: RtpTransceiver) {
+                diag("remote track: ${transceiver.receiver.track()?.kind()}")
                 (transceiver.receiver.track() as? VideoTrack)?.let { remoteVideoTrack.value = it }
             }
 
             override fun onConnectionChange(newState: PeerConnection.PeerConnectionState) {
+                diag("connection: $newState")
                 when (newState) {
                     PeerConnection.PeerConnectionState.CONNECTED -> {
                         disconnectJob?.cancel() // recovered — cancel any pending hang-up
@@ -132,7 +135,7 @@ class WebRtcSession(
             }
 
             override fun onSignalingChange(p0: PeerConnection.SignalingState?) {}
-            override fun onIceConnectionChange(p0: PeerConnection.IceConnectionState?) {}
+            override fun onIceConnectionChange(p0: PeerConnection.IceConnectionState?) { diag("ice: $p0") }
             override fun onIceConnectionReceivingChange(p0: Boolean) {}
             override fun onIceGatheringChange(p0: PeerConnection.IceGatheringState?) {}
             override fun onIceCandidatesRemoved(p0: Array<out IceCandidate>?) {}
@@ -188,6 +191,7 @@ class WebRtcSession(
         scope.launch {
             signaling.signals.collect { event ->
                 if (event.callId != callId) return@collect
+                diag("recv ${event::class.simpleName}")
                 when (event) {
                     is SignalEvent.Offer -> {
                         peer?.setRemoteDescription(object : SdpObserverAdapter() {
@@ -233,6 +237,7 @@ class WebRtcSession(
     }
 
     fun dispose() {
+        diag("dispose")
         disconnectJob?.cancel()
         try { videoCapturer?.stopCapture() } catch (_: Exception) {}
         videoCapturer?.dispose()
@@ -242,6 +247,27 @@ class WebRtcSession(
         remoteVideoTrack.value = null
         peer?.close()
         peer = null
+    }
+
+    /** The ICE candidate type ("host" / "srflx" / "relay") from a candidate line. */
+    private fun candType(sdp: String): String {
+        val i = sdp.indexOf("typ ")
+        return if (i >= 0) sdp.substring(i + 4).substringBefore(' ') else "?"
+    }
+
+    /**
+     * Append a timestamped call event to <app files>/call-log.txt (and logcat).
+     * Lets us see exactly how a call negotiated — which candidates were gathered
+     * and where ICE reached CONNECTED or FAILED — without a USB/logcat connection.
+     */
+    private fun diag(msg: String) {
+        android.util.Log.i("NexaCall", "[$callId] $msg")
+        runCatching {
+            val dir = appContext.getExternalFilesDir(null) ?: appContext.filesDir
+            java.io.FileWriter(java.io.File(dir, "call-log.txt"), true).use {
+                it.write("${System.currentTimeMillis()} ${callId.take(8)} $msg\n")
+            }
+        }
     }
 
     private fun mediaConstraints() = MediaConstraints().apply {
