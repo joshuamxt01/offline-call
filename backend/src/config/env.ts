@@ -42,6 +42,10 @@ const envSchema = z.object({
   // set, they're returned as-is instead of generating coturn HMAC credentials.
   TURN_USERNAME: z.string().optional(),
   TURN_CREDENTIAL: z.string().optional(),
+  // Only hand out the TURN relay when explicitly enabled AND its creds are
+  // verified working. A BROKEN relay blocks same-network calls that would connect
+  // directly, so default OFF -> STUN-only (direct peer-to-peer).
+  TURN_ENABLED: z.string().optional(),
 
   S3_ENDPOINT: z.string().default("http://localhost:9000"),
   S3_REGION: z.string().default("us-east-1"),
